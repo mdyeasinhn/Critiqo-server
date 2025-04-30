@@ -17,7 +17,24 @@ const createAdmin = z.object({
         })
     })
 });
+const createGuest = z.object({
+    password: z.string({
+        required_error: "Password is required"
+    }),
+    guest: z.object({
+        name: z.string({
+            required_error: "Name is required!"
+        }),
+        email: z.string({
+            required_error: "Email is required!"
+        }),
+        contactNumber: z.string({
+            required_error: "Contact Number is required!"
+        })
+    })
+});
 
 export const userValidation ={
-    createAdmin
+    createAdmin,
+    createGuest
 }
