@@ -25,6 +25,8 @@ model User {
   updatedAt          DateTime  @default(now())
   admin              Admin?
   guest              Guest?
+  Review             Review[]
+  Comment            Comment[]
 
   @@map("users")
 }
@@ -61,6 +63,7 @@ model Guest {
   @@map("guests")
 }
 
+//---------------- Post Table----------------
 model Post {
   id          String   @id @default(uuid())
   title       String
@@ -71,13 +74,48 @@ model Post {
   authorId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  review      Review[]
+
+  @@map("posts")
 }
 
+//---------------- Category Table----------------
 model Category {
   id    String @id @default(uuid())
   name  String @unique
   posts Post[]
 }
+
+//---------------- Review Table----------------
+model Review {
+  id           String       @id @default(uuid())
+  title        String
+  content      String
+  rating       Int
+  images       String[]
+  postId       String
+  post         Post         @relation(fields: [postId], references: [id])
+  authorId     String
+  author       User         @relation(fields: [authorId], references: [id])
+  status       ReviewStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  comment   Comment[]
+
+  @@map("reviews")
+}
+//---------------- Comment Table----------------
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 
 //-----User role------- 
 enum UserRole {
@@ -90,4 +128,10 @@ enum UserStaus {
   ACTIVE
   BLOCKED
   DELETED
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  UNPUBLISHED
 }
