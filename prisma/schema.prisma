@@ -175,7 +175,7 @@ model Vote {
 model Payment {
   id            String   @id @default(uuid())
   amount        Float
-  status        String // e.g., "completed", "failed"
+  status        PaymentStatus // e.g., "completed", "failed"
   transactionId String?
   reviewId      String
   userId        String
@@ -183,4 +183,9 @@ model Payment {
 
   review Review @relation(fields: [reviewId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
+}
+
+enum PaymentStatus {
+  COMPLETEED
+  FAILED
 }
