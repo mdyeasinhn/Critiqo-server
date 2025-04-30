@@ -12,3 +12,32 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ------------ Createing user model ---------------
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  password           String
+  role               UserRole  @default(GUEST)
+  needPasswordChange Boolean   @default(true)
+  status             UserStaus @default(ACTIVE)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now())
+
+  @@map("users")
+}
+
+
+
+//-----User role------- 
+enum UserRole {
+  ADMIN
+  GUEST
+}
+
+//-------Userstatus ---------
+enum UserStaus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
