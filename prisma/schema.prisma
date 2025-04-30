@@ -23,8 +23,42 @@ model User {
   status             UserStaus @default(ACTIVE)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now())
+  admin              Admin?
+  guest              Guest?
 
   @@map("users")
+}
+
+//---------------- Admin Table----------------
+model Admin {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String
+  isDeleteAt    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+  user User @relation(fields: [email], references: [email])
+
+  @@map("admins")
+}
+
+//---------------- GUEST Table----------------
+model Guest {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String
+  isDeleteAt    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+
+  user User @relation(fields: [email], references: [email])
+
+  @@map("guests")
 }
 
 model Post {
