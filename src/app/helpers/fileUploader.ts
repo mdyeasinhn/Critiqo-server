@@ -1,52 +1,83 @@
 import multer from "multer";
 import path from "path";
-import fs from 'fs'
+import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import { ICloudinaryResponse, IFile } from "../interface/file";
 
-
+// Load configuration from environment variables
 cloudinary.config({
-    cloud_name: 'diepqypex',
-    api_key: '992165345858327',
-    api_secret: 'cCArBANK5gfIS9u-d36zsQ8TgZI' // Click 'View API Keys' above to copy your API secret
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'diepqypex',
+    api_key: process.env.CLOUDINARY_API_KEY || '992165345858327',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'cCArBANK5gfIS9u-d36zsQ8TgZI'
 });
+
+// Create uploads directory if it doesn't exist
+const uploadDirectory = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDirectory)) {
+    fs.mkdirSync(uploadDirectory, { recursive: true });
+}
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-
-        cb(null, path.join(process.cwd(), 'uploads'))
+        cb(null, uploadDirectory);
     },
     filename: function (req, file, cb) {
-
-        cb(null, file.originalname)
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
     }
-})
+});
 
-const upload = multer({ storage: storage });
+// File filter to allow only images
+const fileFilter = (req: any, file: any, cb: any) => {
+    if (
+        file.mimetype === 'image/jpeg' ||
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg'
+    ) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only .jpg, .jpeg and .png formats are allowed!'), false);
+    }
+};
 
-
+const upload = multer({ 
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
 
 const uploadToCloudinary = async (file: IFile): Promise<ICloudinaryResponse | undefined> => {
-      // Upload an image
     return new Promise((resolve, reject) => {
-        cloudinary.uploader
-            .upload(
-                file.path,
-                (error :Error, result :ICloudinaryResponse)  =>{
-                    fs.unlinkSync(file.path)
-                    if(error){
-                        reject(error)
-                    }else{
-                        resolve(result)
-                    }
+        cloudinary.uploader.upload(
+            file.path,
+            {
+                folder: 'product-review-portal',
+                resource_type: 'auto'
+            },
+            (err, result) => {
+                // Delete local file after upload
+                fs.unlinkSync(file.path);
+                
+                if (err || !result) {
+                    reject(err || new Error('Upload failed'));
+                } else {
+                    resolve(result as unknown as ICloudinaryResponse);
                 }
-            );
-    })
+            }
+        );
+    });
+};
 
-
-}
+const uploadMultipleToCloudinary = async (files: IFile[]): Promise<ICloudinaryResponse[]> => {
+    const uploadPromises = files.map(file => uploadToCloudinary(file));
+    return Promise.all(uploadPromises.filter(promise => promise !== undefined)) as Promise<ICloudinaryResponse[]>;
+};
 
 export const fileUploader = {
     upload,
-    uploadToCloudinary
-}
+    uploadToCloudinary,
+    uploadMultipleToCloudinary
+};

@@ -3,7 +3,7 @@ import prisma from "../models";
 import bcrypt from 'bcrypt';
 import { IFile } from "../../interface/file";
 import { fileUploader } from "../../helpers/fileUploader";
-import { UserRole } from "@prisma/client";
+import { UserRole } from '@prisma/client';
 
 const createAdmin = async (req: Request) => {
     const file = req.file as IFile;
@@ -22,7 +22,7 @@ const createAdmin = async (req: Request) => {
         role: UserRole.ADMIN,
     }
 
-    const result = await prisma.$transaction(async (transctionClient) => {
+    const result = await prisma.$transaction(async (transctionClient : any) => {
         await transctionClient.user.create({
             data: userData,
         });
@@ -53,7 +53,7 @@ const createGuest = async (req : Request) => {
         role: UserRole.GUEST,
     }
 
-    const result = await prisma.$transaction(async (transctionClient) => {
+    const result = await prisma.$transaction(async (transctionClient : any) => {
         await transctionClient.user.create({
             data: userData,
         });
