@@ -23,6 +23,7 @@
   "dependencies": {
     "@prisma/client": "^6.7.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "http-status-codes": "^2.3.0"
   }
 }
