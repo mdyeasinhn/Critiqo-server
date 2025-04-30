@@ -17,6 +17,19 @@ const createAdmin = catchAsync(async (req: Request, res: Response, next: NextFun
     })
 });
 
+//-------------Create GUEST ------------------
+const createGuest = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const result = await UserService.createGuest(req);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "User Created successfull!",
+        data: result
+    })
+});
+
 export const UserController ={
-    createAdmin
+    createAdmin,
+    createGuest,
 }

@@ -5,7 +5,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import { ICloudinaryResponse, IFile } from "../interface/file";
 
 
-
 cloudinary.config({
     cloud_name: 'diepqypex',
     api_key: '992165345858327',
