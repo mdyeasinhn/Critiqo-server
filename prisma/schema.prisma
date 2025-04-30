@@ -46,12 +46,12 @@ model User {
   updatedAt          DateTime   @updatedAt
 
   // Relations
-  admin              Admin?
-  guest              Guest?
-  reviews            Review[]
-  comments           Comment[]
-  votes              Vote[]
-  payments           Payment[]
+  admin    Admin?
+  guest    Guest?
+  reviews  Review[]
+  comments Comment[]
+  votes    Vote[]
+  payments Payment[]
 
   @@map("users")
 }
@@ -92,8 +92,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  reviews   Review[]
-  posts     Post[]
+  reviews Review[]
+  posts   Post[]
 
   @@map("categories")
 }
@@ -108,34 +108,36 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    Category @relation(fields: [categoryId], references: [id])
-  review      Review[]
+  category Category @relation(fields: [categoryId], references: [id])
+  review   Review[]
 
   @@map("posts")
 }
 
 model Review {
-  id              String        @id @default(uuid())
-  title           String
-  description     String
-  rating          Int
-  purchaseSource  String?
-  images          String[]      // Cloudinary URLs
-  isPremium       Boolean       @default(false)
-  premiumPrice    Float?
-  status          ReviewStatus  @default(DRAFT)
-  moderationNote  String?
-  categoryId      String
-  userId          String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String       @id @default(uuid())
+  title          String
+  description    String
+  rating         Int
+  purchaseSource String?
+  images         String[] // Cloudinary URLs
+  isPremium      Boolean      @default(false)
+  premiumPrice   Float?
+  status         ReviewStatus @default(DRAFT)
+  moderationNote String?
+  categoryId     String
+  userId         String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   // Relations
-  category        Category      @relation(fields: [categoryId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
-  comments        Comment[]
-  votes           Vote[]
-  payments        Payment[]
+  category Category  @relation(fields: [categoryId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  comments Comment[]
+  votes    Vote[]
+  payments Payment[]
+  Post     Post?     @relation(fields: [postId], references: [id])
+  postId   String?
 
   @@map("reviews")
 }
@@ -145,15 +147,15 @@ model Comment {
   content   String
   reviewId  String
   userId    String
-  parentId  String?  // For nesting
+  parentId  String? // For nesting
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  review    Review   @relation(fields: [reviewId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-  parent    Comment? @relation("CommentToComment", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentToComment")
+  review  Review    @relation(fields: [reviewId], references: [id])
+  user    User      @relation(fields: [userId], references: [id])
+  parent  Comment?  @relation("CommentToComment", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentToComment")
 }
 
 model Vote {
@@ -164,8 +166,8 @@ model Vote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  review    Review   @relation(fields: [reviewId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  review Review @relation(fields: [reviewId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   @@unique([reviewId, userId])
 }
@@ -173,12 +175,12 @@ model Vote {
 model Payment {
   id            String   @id @default(uuid())
   amount        Float
-  status        String   // e.g., "completed", "failed"
+  status        String // e.g., "completed", "failed"
   transactionId String?
   reviewId      String
   userId        String
   createdAt     DateTime @default(now())
 
-  review        Review   @relation(fields: [reviewId], references: [id])
-  user          User     @relation(fields: [userId], references: [id])
+  review Review @relation(fields: [reviewId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 }
