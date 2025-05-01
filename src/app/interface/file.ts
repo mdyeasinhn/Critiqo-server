@@ -20,7 +20,7 @@ export type ICloudinaryResponse = {
     access_mode?: string;
     original_filename: string;
     api_key?: string;
-    [key: string]: any; 
+    [key: string]: any; // For any additional properties Cloudinary might return
 };
 
 export type IFile = {
@@ -46,6 +46,7 @@ export type IGenericResponse<T> = {
 export type IPaginationOptions = {
     page?: number;
     limit?: number;
+    skip?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
 };
