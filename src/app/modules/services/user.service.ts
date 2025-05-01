@@ -3,7 +3,7 @@ import prisma from "../models";
 import bcrypt from 'bcrypt';
 import { IFile } from "../../interface/file";
 import { fileUploader } from "../../helpers/fileUploader";
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 
 const createAdmin = async (req: Request) => {
     const file = req.file as IFile;
@@ -65,7 +65,9 @@ const createGuest = async (req : Request) => {
 
     })
     return result
-}
+};
+
+
 
 export const UserService = {
     createAdmin,
