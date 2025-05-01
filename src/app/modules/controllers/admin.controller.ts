@@ -10,9 +10,10 @@ interface AuthenticatedRequest extends Request {
     user: {
       userId: string;
       role: string;
+      email: string; 
     };
   }
-
+  
 
 const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
     const result = await AdminService.getDashboardStats();
