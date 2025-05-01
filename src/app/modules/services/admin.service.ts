@@ -1,9 +1,9 @@
 import prisma from "../models";
 import { IFile, IPaginationOptions } from "../../interface/file";
 import { ReviewStatus, UserRole, UserStatus } from "@prisma/client";
-import ApiError from "../../shared/ApiError";
 import { StatusCodes } from "http-status-codes";
 import { fileUploader } from "../../helpers/fileUploader";
+import ApiError from "../../error/ApiError";
 
 const getDashboardStats = async () => {
     // Get total users count by role

@@ -2,8 +2,9 @@ import { ErrorRequestHandler, Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { StatusCodes } from "http-status-codes";
-import ApiError from "../app/shared/ApiError";
+
 import config from "../app/config";
+import ApiError from "../app/error/ApiError";
 
 // Simplified error message structure
 type ErrorMessage = {
