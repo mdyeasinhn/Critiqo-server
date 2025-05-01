@@ -31,5 +31,5 @@ const createGuest = catchAsync(async (req: Request, res: Response, next: NextFun
 
 export const UserController ={
     createAdmin,
-    createGuest,
+    createGuest
 }
