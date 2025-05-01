@@ -8,6 +8,7 @@ export default {
   port: process.env.PORT || 5000,
   database_url: process.env.DATABASE_URL,
   salt_rounds: process.env.SALT_ROUNDS || 12,
+  stripe_secret: process.env.STRIPE_SECRET_KEY,
   jwt: {
     secret: process.env.JWT_SECRET || 'your-secret-key',
     expires_in: process.env.JWT_EXPIRES_IN || '1d',
