@@ -1,7 +1,9 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import router from "./app/routes";
 import cookieParser from 'cookie-parser';
+import { StatusCodes } from "http-status-codes";
+import globalErrorHandler from "./middleware/globalErrorHandler";
 
 
 const app: Application = express();
@@ -22,11 +24,21 @@ app.get('/', (req: Request, res: Response) => {
 // Application routes
 app.use('/api/v1', router);
 
-app.get("/", (req: Request, res: Response) => {
-    res.send({
-      message: "The server is running",
-    });
-  });
 
 
+  app.use( (req: Request, res: Response, next : NextFunction) => {
+    res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'Route not found',
+        error : {
+            path : req.originalUrl,
+            message : "Your requested method is not found"
+        }
+    })
+})
+
+
+
+// Global Error Handler
+app.use(globalErrorHandler);
   export default app;
