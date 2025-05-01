@@ -5,10 +5,12 @@ import sendResponse from "../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import pick from "../../shared/pick";
 import { paginationFields } from "../../../constants/pagination";
+import prisma from "../models"; // Import the Prisma client
 
 interface AuthenticatedRequest extends Request {
     user: {
-        userId: string;
+        userId?: string;
+        id?: string;
         role: string;
         email: string; 
     };
@@ -66,7 +68,42 @@ const moderateReview = catchAsync(async (req: Request, res: Response) => {
  * Get admin profile information
  */
 const getAdminProfile = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
-    const { userId } = req.user;
+    // Log the user object to debug
+    console.log('User in getAdminProfile:', req.user);
+    
+    // Try to find a valid user ID
+    const userId = req.user?.userId || req.user?.id;
+    
+    // Make sure userId exists
+    if (!userId) {
+        // Try to find user by email if we have it
+        if (req.user?.email) {
+            try {
+                const user = await prisma.user.findUnique({
+                    where: { email: req.user.email }
+                });
+                
+                if (user) {
+                    const result = await AdminService.getAdminProfile(user.id);
+                    return sendResponse(res, {
+                        statusCode: StatusCodes.OK,
+                        success: true,
+                        message: "Admin profile retrieved successfully!",
+                        data: result
+                    });
+                }
+            } catch (error) {
+                console.error('Error finding user by email:', error);
+            }
+        }
+        
+        return sendResponse(res, {
+            statusCode: StatusCodes.UNAUTHORIZED,
+            success: false,
+            message: "User ID is missing from authentication token",
+            data: null
+        });
+    }
     
     const result = await AdminService.getAdminProfile(userId);
 
@@ -81,8 +118,41 @@ const getAdminProfile = catchAsync(async (req: AuthenticatedRequest, res: Respon
 /**
  * Update admin profile information
  */
-const updateAdminProfile = catchAsync<AuthenticatedRequest>(async (req, res) => {
-    const { userId } = req.user;
+const updateAdminProfile = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+    // Try to find a valid user ID
+    const userId = req.user?.userId || req.user?.id;
+    
+    // Make sure userId exists
+    if (!userId) {
+        // Try to find user by email if we have it
+        if (req.user?.email) {
+            try {
+                const user = await prisma.user.findUnique({
+                    where: { email: req.user.email }
+                });
+                
+                if (user) {
+                    const result = await AdminService.updateAdminProfile(user.id, req.body, req.file);
+                    return sendResponse(res, {
+                        statusCode: StatusCodes.OK,
+                        success: true,
+                        message: "Admin profile updated successfully!",
+                        data: result
+                    });
+                }
+            } catch (error) {
+                console.error('Error finding user by email:', error);
+            }
+        }
+        
+        return sendResponse(res, {
+            statusCode: StatusCodes.UNAUTHORIZED,
+            success: false,
+            message: "User ID is missing from authentication token",
+            data: null
+        });
+    }
+    
     const updateData = req.body;
     const file = req.file;
     

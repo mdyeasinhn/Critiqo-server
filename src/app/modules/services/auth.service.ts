@@ -4,37 +4,55 @@ import bcrypt from 'bcrypt';
 import { jwtHelpars } from "../../helpers/jwtHelpers";
 import config from "../../config";
 import { Secret } from "jsonwebtoken";
+import ApiError from "../../error/ApiError";
+import { StatusCodes } from "http-status-codes";
 
-
+/**
+ * Login user with email and password
+ */
 const loginUser = async (payload: {
     email: string,
     password: string
 }) => {
-    const userData = await prisma.user.findUniqueOrThrow({
+    // Find user by email
+    const userData = await prisma.user.findUnique({
         where: {
             email: payload.email,
             status: UserStatus.ACTIVE
         }
     });
 
+    if (!userData) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid credentials");
+    }
+
+    // Verify password
     const isCorrectPassword: boolean = await bcrypt.compare(payload.password, userData.password);
 
     if (!isCorrectPassword) {
-        throw new Error("Password incorrect!")
-    };
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid credentials");
+    }
 
-    const accessToken = jwtHelpars.generateToken({
+    // Create token payload with all necessary fields
+    const tokenPayload = {
+        userId: userData.id,    // Must include userId explicitly
+        id: userData.id,        // Include id as a backup
         email: userData.email,
         role: userData.role
-    },
+    };
+
+    console.log("Token payload:", tokenPayload);
+
+    // Generate access token
+    const accessToken = jwtHelpars.generateToken(
+        tokenPayload,
         config.jwt.secret as Secret,
         config.jwt.expires_in as string
     );
 
-    const refreshToken = jwtHelpars.generateToken({
-        email: userData.email,
-        role: userData.role
-    },
+    // Generate refresh token
+    const refreshToken = jwtHelpars.generateToken(
+        tokenPayload,
         config.jwt.refresh_secret as Secret,
         config.jwt.refresh_expires_in as string
     );
@@ -42,49 +60,68 @@ const loginUser = async (payload: {
     return {
         accessToken,
         refreshToken,
-        needPasswordChange: userData.needPasswordChange
-    }
+        needPasswordChange: userData.needPasswordChange,
+        user: {
+            id: userData.id,
+            email: userData.email,
+            role: userData.role,
+            name: userData.name
+        }
+    };
+};
 
-}
-
-
-const refresToken = async (token: string) => {
+/**
+ * Refresh access token using refresh token
+ */
+const refreshToken = async (token: string) => {
     let decodedData;
     try {
+        // Verify refresh token
         decodedData = jwtHelpars.verifyToken(token, config.jwt.refresh_secret as Secret);
-
-        console.log(decodedData)
+        console.log('Decoded refresh token:', decodedData);
     } catch (error) {
-        throw new Error("You are not authorizeed!")
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid refresh token");
     }
 
-    const isUserExist = await prisma.user.findUniqueOrThrow({
+    // Check if necessary data is present
+    if (!decodedData.email) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid token payload");
+    }
+
+    // Find user by email
+    const userData = await prisma.user.findUnique({
         where: {
-            email: decodedData?.email
+            email: decodedData.email,
+            status: UserStatus.ACTIVE
         }
     });
 
+    if (!userData) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    }
 
-    const userData = await prisma.user.findUniqueOrThrow({
-        where: {
-            email: decodedData?.email,
-            status: UserStatus.ACTIVE
-        }
-    })
-    const accessToken = jwtHelpars.generateToken({
+    // Create token payload with all necessary fields
+    const tokenPayload = {
+        userId: userData.id,    // Must include userId explicitly
+        id: userData.id,        // Include id as a backup
         email: userData.email,
         role: userData.role
-    },
-        config.jwt.refresh_secret as Secret,
+    };
+
+    // Generate new access token
+    const accessToken = jwtHelpars.generateToken(
+        tokenPayload,
+        config.jwt.secret as Secret,
         config.jwt.expires_in as string
-    )
+    );
+    
     return {
         accessToken,
         needPasswordChange: userData.needPasswordChange
-    }
+    };
 };
 
 export const AuthService = {
     loginUser,
-    refresToken
-} 
+    refreshToken
+};

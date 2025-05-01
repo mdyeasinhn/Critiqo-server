@@ -269,8 +269,12 @@ const moderateReview = async (
  * @returns Admin profile data
  */
 const getAdminProfile = async (userId: string) => {
-    // Get user
-    const user = await prisma.user.findUnique({
+    if (!userId) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'User ID is required');
+    }
+
+    // Get user with admin role
+    const user = await prisma.user.findFirst({
         where: {
             id: userId,
             role: UserRole.ADMIN,
@@ -311,8 +315,12 @@ const updateAdminProfile = async (
     },
     file?: Express.Multer.File
 ) => {
-    // Get user
-    const user = await prisma.user.findUnique({
+    if (!userId) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'User ID is required');
+    }
+
+    // Get user with admin role
+    const user = await prisma.user.findFirst({
         where: {
             id: userId,
             role: UserRole.ADMIN,
