@@ -10,7 +10,7 @@ const router = express.Router();
 
 // In user.route.ts
 router.post("/create-admin",
-    auth(UserRole.ADMIN),
+    // auth(UserRole.ADMIN),
     fileUploader.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
         console.log('File:', req.file);
