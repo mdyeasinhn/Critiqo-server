@@ -7,31 +7,56 @@ import auth from '../../../middleware/auth';
 
 const router = express.Router();
 
-// Get dashboard statistics (admin only)
+// All routes under admin are protected with admin authentication
+router.use(auth(UserRole.ADMIN));
+
+// Get dashboard statistics
 router.get(
     '/dashboard',
-    auth(UserRole.ADMIN),
     AdminController.getDashboardStats
 );
 
-// Get pending reviews (admin only)
+// Get pending reviews that need moderation
 router.get(
     '/reviews/pending',
-    auth(UserRole.ADMIN),
     AdminController.getPendingReviews
+);
+
+// Moderate a review (approve or unpublish)
+router.patch(
+    '/reviews/:id/moderate',
+    (req: Request, res: Response, next: NextFunction) => {
+        if (req.body.data) {
+            req.body = adminValidation.moderateReview.parse(JSON.parse(req.body.data));
+        } else {
+            req.body = adminValidation.moderateReview.parse(req.body);
+        }
+        return next();
+    },
+    AdminController.moderateReview
+);
+
+// Get payment analytics
+router.get(
+    '/payments/analytics',
+    AdminController.getPaymentAnalytics
+);
+
+// Remove inappropriate comment
+router.delete(
+    '/comments/:id',
+    AdminController.removeInappropriateComment
 );
 
 // Get admin profile
 router.get(
     '/profile',
-    auth(UserRole.ADMIN),
     AdminController.getAdminProfile
 );
 
 // Update admin profile
 router.patch(
     '/profile',
-    auth(UserRole.ADMIN),
     fileUploader.upload.single('file'),
     (req: Request, res: Response, next: NextFunction) => {
         if (req.body.data) {
