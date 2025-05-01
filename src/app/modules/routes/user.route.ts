@@ -8,6 +8,11 @@ import { UserRole } from '@prisma/client';
 
 const router = express.Router();
 
+
+router.get('/',
+    auth(UserRole.ADMIN, UserRole.GUEST),
+    UserController.getAllUserFromDB
+);
 // In user.route.ts
 router.post("/create-admin",
     // auth(UserRole.ADMIN),
@@ -15,7 +20,7 @@ router.post("/create-admin",
     (req: Request, res: Response, next: NextFunction) => {
         console.log('File:', req.file);
         console.log('Body:', req.body);
-        
+
         try {
             req.body = userValidation.createAdmin.parse(JSON.parse(req.body.data));
             return UserController.createAdmin(req, res, next);
@@ -32,6 +37,7 @@ router.post("/create-guest",
         return UserController.createGuest(req, res, next)
     }
 );
+
 
 
 export const UserRoutes = router
