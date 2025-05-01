@@ -175,7 +175,7 @@ model Vote {
 model Payment {
   id            String   @id @default(uuid())
   amount        Float
-  status        PaymentStatus // e.g., "completed", "failed"
+  status        PaymentStatus 
   transactionId String?
   reviewId      String
   userId        String

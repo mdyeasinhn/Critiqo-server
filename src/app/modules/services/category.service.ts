@@ -1,8 +1,8 @@
 import { Category, Prisma } from "@prisma/client"; 
 import prisma from "../models";
 import { StatusCodes } from "http-status-codes";
-import ApiError from "../../shared/ApiError";
 import { IPaginationOptions } from "../../interface/file";
+import ApiError from "../../error/ApiError";
 
 const createCategory = async (data: { name: string }): Promise<Category> => {
     // Check if category with the same name already exists
