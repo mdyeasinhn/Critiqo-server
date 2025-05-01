@@ -8,12 +8,21 @@ import { UserRole } from '@prisma/client';
 
 const router = express.Router();
 
+// In user.route.ts
 router.post("/create-admin",
     auth(UserRole.ADMIN),
     fileUploader.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createAdmin.parse(JSON.parse(req.body.data))
-        return UserController.createAdmin(req, res, next)
+        console.log('File:', req.file);
+        console.log('Body:', req.body);
+        
+        try {
+            req.body = userValidation.createAdmin.parse(JSON.parse(req.body.data));
+            return UserController.createAdmin(req, res, next);
+        } catch (error) {
+            console.error('Parsing error:', error);
+            next(error);
+        }
     }
 );
 router.post("/create-guest",

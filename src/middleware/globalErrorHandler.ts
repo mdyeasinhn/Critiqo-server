@@ -1,4 +1,4 @@
-import { ErrorRequestHandler, Request, Response, NextFunction } from "express";
+import { ErrorRequestHandler, Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { StatusCodes } from "http-status-codes";
@@ -6,129 +6,117 @@ import { StatusCodes } from "http-status-codes";
 import config from "../app/config";
 import ApiError from "../app/error/ApiError";
 
-// Define error types
-type IGenericErrorMessage = {
-  path: string | number;
+// Simplified error message structure
+type ErrorMessage = {
+  field?: string;
   message: string;
 };
 
-type IGenericErrorResponse = {
-  statusCode: number;
-  message: string;
-  errorMessages: IGenericErrorMessage[];
-  stack?: string;
-};
-
-const handleZodError = (error: ZodError): IGenericErrorResponse => {
-  const errorMessages: IGenericErrorMessage[] = error.issues.map((issue) => {
-    return {
-      path: issue.path[issue.path.length - 1],
-      message: issue.message,
-    };
-  });
+// Format ZodError into a user-friendly structure
+const handleZodError = (error: ZodError) => {
+  const errors = error.issues.map((issue) => ({
+    field: issue.path.join('.'),
+    message: issue.message
+  }));
 
   return {
     statusCode: StatusCodes.BAD_REQUEST,
     message: "Validation Error",
-    errorMessages,
+    errors
   };
 };
 
-const handlePrismaClientValidationError = (
-  error: Prisma.PrismaClientValidationError
-): IGenericErrorResponse => {
-  const errorMessages = [
-    {
-      path: "",
-      message: error.message,
-    },
-  ];
-  return {
-    statusCode: StatusCodes.BAD_REQUEST,
-    message: "Validation Error",
-    errorMessages,
-  };
-};
-
-const handlePrismaClientKnownRequestError = (
-  error: Prisma.PrismaClientKnownRequestError
-): IGenericErrorResponse => {
-  let statusCode = StatusCodes.BAD_REQUEST;
-  let message = error.message;
-
-  // Handle specific Prisma error codes
-  if (error.code === "P2002") {
-    statusCode = StatusCodes.CONFLICT;
-    message = "Duplicate entry found";
-  } else if (error.code === "P2025") {
-    statusCode = StatusCodes.NOT_FOUND;
-    message = "Record not found";
+// Improved Prisma validation error handling with clearer messages
+const handlePrismaValidationError = (error: Prisma.PrismaClientValidationError) => {
+  // Extract the relevant parts from the error message for easier understanding
+  let errorMessage = error.message;
+  
+  // Simplify common validation error messages
+  if (errorMessage.includes("Argument")) {
+    errorMessage = errorMessage
+      .replace(/Argument\s+/, "Field ")
+      .replace(/provided[\s\S]+?[.]/i, "is invalid.");
   }
 
-  const errorMessages: IGenericErrorMessage[] = [
-    {
-      path: (error.meta?.target as string[])?.join(".") || "",
+  return {
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: "Database Validation Error",
+    errors: [{ message: errorMessage }]
+  };
+};
 
-      message: message,
-    },
-  ];
+// Handle Prisma database errors with specific status codes and messages
+const handlePrismaKnownError = (error: Prisma.PrismaClientKnownRequestError) => {
+  let statusCode = StatusCodes.BAD_REQUEST;
+  let message = "Database Error";
+
+  // Map common Prisma error codes to meaningful messages
+  switch (error.code) {
+    case "P2002":
+      statusCode = StatusCodes.CONFLICT;
+      message = "A record with this value already exists";
+      break;
+    case "P2025":
+      statusCode = StatusCodes.NOT_FOUND;
+      message = "Record not found";
+      break;
+    case "P2003":
+      message = "Foreign key constraint failed";
+      break;
+  }
+
+  const field = Array.isArray(error.meta?.target) 
+    ? (error.meta.target as string[]).join('.')
+    : undefined;
 
   return {
     statusCode,
-    message: "Database Error",
-    errorMessages,
+    message,
+    errors: [{ field, message }]
   };
 };
 
-const globalErrorHandler: ErrorRequestHandler = (
-  error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// Global error handler
+const globalErrorHandler: ErrorRequestHandler = (error, req: Request, res: Response) => {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message = "Something went wrong";
-  let errorMessages: IGenericErrorMessage[] = [];
+  let errors: ErrorMessage[] = [];
 
+  // Handle different error types
   if (error instanceof ZodError) {
-    const simplifiedError = handleZodError(error);
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error instanceof Prisma.PrismaClientValidationError) {
-    const simplifiedError = handlePrismaClientValidationError(error);
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    const simplifiedError = handlePrismaClientKnownRequestError(error);
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error instanceof ApiError) {
+    const result = handleZodError(error);
+    statusCode = result.statusCode;
+    message = result.message;
+    errors = result.errors;
+  } 
+  else if (error instanceof Prisma.PrismaClientValidationError) {
+    const result = handlePrismaValidationError(error);
+    statusCode = result.statusCode;
+    message = result.message;
+    errors = result.errors;
+  } 
+  else if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    const result = handlePrismaKnownError(error);
+    statusCode = result.statusCode; 
+    message = result.message;
+    errors = result.errors;
+  } 
+  else if (error instanceof ApiError) {
     statusCode = error.statusCode;
     message = error.message;
-    errorMessages = [
-      {
-        path: "",
-        message: error.message,
-      },
-    ];
-  } else if (error instanceof Error) {
+    errors = [{ message: error.message }];
+  } 
+  else if (error instanceof Error) {
     message = error.message;
-    errorMessages = [
-      {
-        path: "",
-        message: error.message,
-      },
-    ];
+    errors = [{ message: error.message }];
   }
 
+  // Send the error response
   res.status(statusCode).json({
     success: false,
     message,
-    errorMessages,
-    stack: config.env === "development" ? error.stack : undefined,
+    errors,
+    ...(config.env === "development" && { stack: error.stack })
   });
 };
 
