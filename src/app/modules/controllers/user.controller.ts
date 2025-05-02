@@ -5,8 +5,15 @@ import sendResponse from "../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import pick from "../../shared/pick";
 import { userFilterAbleFiled } from "../../constants/user.constant";
+import { IAuthUser } from "../../interface/common";
 
 
+
+declare module 'express-serve-static-core' {
+    interface Request {
+      user?: IAuthUser; 
+    }
+  }
 //-------------Create Admin ------------------
 const createAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const result = await UserService.createAdmin(req);
@@ -47,9 +54,22 @@ const getAllUserFromDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+//-------------Get my profile---------------------
+const getMyProfile =catchAsync(async(req:Request, res:Response, next:NextFunction)=>{
+    const user = req.user;
+
+    const result = await UserService.getMyProfile(user as IAuthUser);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Retrieving My Profile Data!",
+        data: result,
+    });
+});
 
 export const UserController ={
     createAdmin,
     createGuest,
-    getAllUserFromDB
+    getAllUserFromDB,
+    getMyProfile
 }
