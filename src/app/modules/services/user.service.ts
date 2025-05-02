@@ -3,10 +3,11 @@ import prisma from "../models";
 import bcrypt from 'bcrypt';
 import { IFile } from "../../interface/file";
 import { fileUploader } from "../../helpers/fileUploader";
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { IPagenationOptions } from "../../interface/pagination";
 import { pagenationHelpars } from "../../helpers/pagenationHelper";
 import { userSearchAbleFields } from "../../constants/user.constant";
+import { IAuthUser } from "../../interface/common";
 
 const createAdmin = async (req: Request) => {
     const file = req.file as IFile;
@@ -137,10 +138,41 @@ const getAllUserFromDB = async (params: any, options: IPagenationOptions) => {
     };
 };
 
+//-------------Get My Profile-------------
+const getMyProfile = async (user: IAuthUser) => {
+    const userInfo = await prisma.user.findUniqueOrThrow({
+        where: {
+            email: user?.email,
+            status: UserStatus.ACTIVE
+        },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            status: true,
+        }
+    })
+    let profileInfo;
 
+    if (userInfo.role === UserRole.ADMIN) {
+        profileInfo = await prisma.admin.findUnique({
+            where: {
+                email: userInfo.email
+            }
+        })
+    } else if (userInfo.role === UserRole.GUEST) {
+        profileInfo = await prisma.admin.findUnique({
+            where: {
+                email: userInfo.email
+            }
+        })
+    } 
+    return { ...userInfo, ...profileInfo }
+}
 
 export const UserService = {
     createAdmin,
     createGuest,
-    getAllUserFromDB
+    getAllUserFromDB,
+    getMyProfile
 }
