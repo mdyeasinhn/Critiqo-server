@@ -3,6 +3,10 @@ import { UserRoutes } from '../modules/routes/user.route';
 import { AuthRoutes } from '../modules/routes/auth.route';
 import { AdminRoutes } from '../modules/routes/admin.routes';
 import { PaymentRoute } from '../modules/routes/payment.route';
+import { ReviewRoutes } from '../modules/routes/review.route';
+import { CategoryRoutes } from '../modules/routes/category.route';
+import { VoteRoutes } from '../modules/routes/vote.routes';
+import { CommentRoutes } from '../modules/routes/comment.routes';
 
 
 const router = express.Router();
@@ -20,6 +24,22 @@ const moduleRoutes = [
     {
         path: '/admin',
         route: AdminRoutes
+    },
+    {
+        path: '/reviews',
+        route: ReviewRoutes
+    },
+    {
+        path: '/categories',
+        route: CategoryRoutes
+    },
+    {
+        path: '/votes',
+        route: VoteRoutes
+    },
+    {
+        path: '/comments',
+        route: CommentRoutes
     },
     {
         path: '/payment',
