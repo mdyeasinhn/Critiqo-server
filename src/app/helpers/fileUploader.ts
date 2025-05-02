@@ -3,12 +3,13 @@ import path from "path";
 import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import { ICloudinaryResponse, IFile } from "../interface/file";
+import { NextFunction } from "express";
 
 // Load configuration from environment variables
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'diepqypex',
-    api_key: process.env.CLOUDINARY_API_KEY || '992165345858327',
-    api_secret: process.env.CLOUDINARY_API_SECRET || 'cCArBANK5gfIS9u-d36zsQ8TgZI'
+    cloud_name: 'diepqypex',
+    api_key: '992165345858327',
+    api_secret:'cCArBANK5gfIS9u-d36zsQ8TgZI'
 });
 
 // Create uploads directory if it doesn't exist
@@ -40,6 +41,7 @@ const fileFilter = (req: any, file: any, cb: any) => {
         cb(new Error('Only .jpg, .jpeg and .png formats are allowed!'), false);
     }
 };
+
 
 const upload = multer({
     storage: storage,

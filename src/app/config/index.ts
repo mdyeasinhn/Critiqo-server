@@ -16,8 +16,8 @@ export default {
     refresh_expires_in: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
   cloudinary: {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'diepqypex',
-    api_key: process.env.CLOUDINARY_API_KEY || '992165345858327',
-    api_secret: process.env.CLOUDINARY_API_SECRET || 'cCArBANK5gfIS9u-d36zsQ8TgZI',
+    cloud_name: 'diepqypex',
+    api_key:'992165345858327',
+    api_secret: 'cCArBANK5gfIS9u-d36zsQ8TgZI',
   }
 };
