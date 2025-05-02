@@ -161,7 +161,7 @@ const getMyProfile = async (user: IAuthUser) => {
             }
         })
     } else if (userInfo.role === UserRole.GUEST) {
-        profileInfo = await prisma.admin.findUnique({
+        profileInfo = await prisma.guest.findUnique({
             where: {
                 email: userInfo.email
             }
