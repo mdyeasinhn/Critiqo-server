@@ -6,14 +6,12 @@ import auth from '../../../middleware/auth';
 import { UserRole } from '@prisma/client';
 
 
-
 const router = express.Router();
 
 router.get('/me',
     auth( UserRole.ADMIN, UserRole.GUEST),
     UserController.getMyProfile
 );
-
 
 router.get('/',
     auth(UserRole.ADMIN, UserRole.GUEST),
