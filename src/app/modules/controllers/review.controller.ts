@@ -1,20 +1,23 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import catchAsync from "../../shared/catchAsync";
 import { ReviewService } from "../services/review.service";
 import sendResponse from "../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import pick from "../../shared/pick";
 import { paginationFields } from "../../../constants/pagination";
+import { UserRole } from "@prisma/client";
 
-interface AuthenticatedRequest extends Request {
-    user: {
-        userId: string;
-        role: string;
-        email: string; 
-    };
+interface IAuthUser {
+    userId: string;
+    role: UserRole;
+    email: string;
 }
 
-// Path: src/app/interface/file.ts
+interface AuthenticatedRequest extends Request {
+    user: IAuthUser;
+}
+
+// File interface definition
 export interface IFile {
     fieldname: string;
     originalname: string;
@@ -24,15 +27,29 @@ export interface IFile {
     destination: string;
     filename: string;
     path: string;
-  }
-  
-  
+}
+
+function isAuthUser(user: any): user is IAuthUser {
+  return (
+    user !== null &&
+    typeof user === 'object' &&
+    'userId' in user &&
+    typeof user.userId === 'string' &&
+    'role' in user &&
+    'email' in user &&
+    typeof user.email === 'string'
+  );
+}
 
 /**
  * Create a new review
  */
-const createReview = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
-    const result = await ReviewService.createReview(req);
+const createReview = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !isAuthUser(req.user)) {
+        throw new Error('Unauthorized: Valid user information is required');
+    }
+    
+    const result = await ReviewService.createReview(req as AuthenticatedRequest);
 
     sendResponse(res, {
         statusCode: StatusCodes.CREATED,
@@ -42,10 +59,8 @@ const createReview = catchAsync(async (req: AuthenticatedRequest, res: Response)
     });
 });
 
-/**
- * Get all reviews with filtering and pagination
- */
-const getAllReviews = catchAsync(async (req: Request, res: Response) => {
+
+const getAllReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const filters = pick(req.query, ['status', 'categoryId', 'isPremium', 'title', 'rating', 'userId']);
     const paginationOptions = pick(req.query, paginationFields);
     
@@ -60,12 +75,11 @@ const getAllReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Get a single review by ID
- */
-const getReviewById = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const getReviewById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const userId = req.user?.userId;
+    
+    const userId = req.user && isAuthUser(req.user) ? req.user.userId : undefined;
     
     const result = await ReviewService.getReviewById(id, userId);
 
@@ -77,27 +91,29 @@ const getReviewById = catchAsync(async (req: AuthenticatedRequest, res: Response
     });
 });
 
-/**
- * Update a review
- */
-const updateReview = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const updateReview = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { userId } = req.user;
+    
+    if (!req.user || !isAuthUser(req.user)) {
+        throw new Error('Unauthorized: Valid user information is required');
+    }
+    
+    const userId = req.user.userId;
     const updateData = req.body;
     const files = req.files;
     
     let normalizedFiles: IFile[] | undefined;
 
     if (Array.isArray(files)) {
-      normalizedFiles = files;
+        normalizedFiles = files;
     } else if (files && typeof files === 'object') {
-      normalizedFiles = Object.values(files).flat();
+        normalizedFiles = Object.values(files).flat();
     } else {
-      normalizedFiles = undefined;
+        normalizedFiles = undefined;
     }
     
     const result = await ReviewService.updateReview(id, userId, updateData, normalizedFiles);
-    
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
@@ -107,12 +123,16 @@ const updateReview = catchAsync(async (req: AuthenticatedRequest, res: Response)
     });
 });
 
-/**
- * Delete a review
- */
-const deleteReview = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const deleteReview = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { userId } = req.user;
+    
+    // Check if user data exists and is valid
+    if (!req.user || typeof req.user !== 'object' || !('userId' in req.user)) {
+        throw new Error('Unauthorized: User information is missing');
+    }
+    
+    const userId = req.user.userId as string;
     
     const result = await ReviewService.deleteReview(id, userId);
 
@@ -124,10 +144,8 @@ const deleteReview = catchAsync(async (req: AuthenticatedRequest, res: Response)
     });
 });
 
-/**
- * Get featured reviews for homepage
- */
-const getFeaturedReviews = catchAsync(async (req: Request, res: Response) => {
+
+const getFeaturedReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 6;
     
     const result = await ReviewService.getFeaturedReviews(limit);
@@ -140,10 +158,8 @@ const getFeaturedReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Get related reviews
- */
-const getRelatedReviews = catchAsync(async (req: Request, res: Response) => {
+
+const getRelatedReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 4;
     
@@ -157,10 +173,8 @@ const getRelatedReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Get reviews by user
- */
-const getUserReviews = catchAsync(async (req: Request, res: Response) => {
+
+const getUserReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { userId } = req.params;
     const paginationOptions = pick(req.query, paginationFields);
     
@@ -175,12 +189,16 @@ const getUserReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Remove image from review
- */
-const removeImage = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const removeImage = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { userId } = req.user;
+    
+    // Check if user data exists and is valid
+    if (!req.user || typeof req.user !== 'object' || !('userId' in req.user)) {
+        throw new Error('Unauthorized: User information is missing');
+    }
+    
+    const userId = req.user.userId as string;
     const { imageUrl } = req.body;
     
     const result = await ReviewService.removeImage(id, userId, imageUrl);
