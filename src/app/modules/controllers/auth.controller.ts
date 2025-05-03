@@ -15,12 +15,10 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     res.cookie('refreshToken', refreshToken, {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        // sameSite: 'strict',
+        // maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
-    // Log the access token contents for debugging
-    console.log('Access token payload:', otherData.accessToken);
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
