@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import catchAsync from "../../shared/catchAsync";
 import { CommentService } from "../services/comment.service";
 import sendResponse from "../../shared/sendResponse";
@@ -7,18 +7,19 @@ import pick from "../../shared/pick";
 import { paginationFields } from "../../../constants/pagination";
 import { UserRole } from "@prisma/client";
 
-interface AuthenticatedRequest extends Request {
-    user: {
-        userId: string;
-        role: string;
-        email: string; 
-    };
+
+interface IAuthUser {
+    userId: string;
+    role: UserRole; 
+    email: string;
 }
 
-/**
- * Add a comment to a review
- */
-const addComment = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+interface AuthenticatedRequest extends Request {
+    user: IAuthUser;
+}
+
+
+const addComment = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const { reviewId, content, parentId } = req.body;
     const { userId } = req.user;
     
@@ -32,10 +33,8 @@ const addComment = catchAsync(async (req: AuthenticatedRequest, res: Response) =
     });
 });
 
-/**
- * Get comments for a review
- */
-const getReviewComments = catchAsync(async (req: Request, res: Response) => {
+
+const getReviewComments = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { reviewId } = req.params;
     const paginationOptions = pick(req.query, paginationFields);
     
@@ -50,10 +49,8 @@ const getReviewComments = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Update a comment
- */
-const updateComment = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const updateComment = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { content } = req.body;
     const { userId } = req.user;
@@ -68,10 +65,8 @@ const updateComment = catchAsync(async (req: AuthenticatedRequest, res: Response
     });
 });
 
-/**
- * Delete a comment
- */
-const deleteComment = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const deleteComment = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { userId, role } = req.user;
     const isAdmin = role === UserRole.ADMIN;
@@ -86,10 +81,8 @@ const deleteComment = catchAsync(async (req: AuthenticatedRequest, res: Response
     });
 });
 
-/**
- * Get comment replies
- */
-const getCommentReplies = catchAsync(async (req: Request, res: Response) => {
+
+const getCommentReplies = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { commentId } = req.params;
     const paginationOptions = pick(req.query, paginationFields);
     
