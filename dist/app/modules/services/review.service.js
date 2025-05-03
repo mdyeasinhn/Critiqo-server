@@ -1,52 +1,58 @@
-import prisma from "../models";
-import { IFile, IPaginationOptions, IGenericResponse } from "../../interface/file";
-import { ReviewStatus, UserRole, UserStatus, VoteType } from "@prisma/client";
-import { StatusCodes } from "http-status-codes";
-import { fileUploader } from "../../helpers/fileUploader";
-import ApiError from "../../error/ApiError";
-import { Request } from "express";
-
-// Define the authentication interface
-interface IAuthUser {
-    userId: string;
-    role: UserRole;
-    email: string;
-}
-
-// Extend the Express Request type
-interface AuthenticatedRequest extends Request {
-    user: IAuthUser;
-}
-
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ReviewService = void 0;
+const models_1 = __importDefault(require("../models"));
+const client_1 = require("@prisma/client");
+const http_status_codes_1 = require("http-status-codes");
+const fileUploader_1 = require("../../helpers/fileUploader");
+const ApiError_1 = __importDefault(require("../../error/ApiError"));
 /**
  * Create a new review
  */
-const createReview = async (req: AuthenticatedRequest) => {
+const createReview = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user.userId;
-    const files = req.files as IFile[];
-    
+    const files = req.files;
     // Get the review data from the request body
-    const { categoryId, title, description, rating, purchaseSource, isPremium, premiumPrice, ...reviewData } = req.body;
-    
+    const _a = req.body, { categoryId, title, description, rating, purchaseSource, isPremium, premiumPrice } = _a, reviewData = __rest(_a, ["categoryId", "title", "description", "rating", "purchaseSource", "isPremium", "premiumPrice"]);
     // Check if premium price is provided for premium reviews
     if (isPremium && !premiumPrice) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Premium price is required for premium reviews");
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Premium price is required for premium reviews");
     }
-    
     // Upload images to Cloudinary if provided
-    let imageUrls: string[] = [];
+    let imageUrls = [];
     if (files && files.length > 0) {
-        const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
+        const uploadedImages = yield fileUploader_1.fileUploader.uploadMultipleToCloudinary(files);
         imageUrls = uploadedImages.map(image => image.secure_url);
     }
-    
     // Admin can directly publish, users create draft reviews
-    const initialStatus = req.user.role === UserRole.ADMIN ? 
-        ReviewStatus.PUBLISHED : 
-        ReviewStatus.DRAFT;
-    
+    const initialStatus = req.user.role === client_1.UserRole.ADMIN ?
+        client_1.ReviewStatus.PUBLISHED :
+        client_1.ReviewStatus.DRAFT;
     // Create review
-    const review = await prisma.review.create({
+    const review = yield models_1.default.review.create({
         data: {
             title,
             description,
@@ -70,68 +76,40 @@ const createReview = async (req: AuthenticatedRequest) => {
             }
         }
     });
-    
     return review;
-};
-
+});
 /**
  * Get all reviews with pagination and filtering
  */
-const getAllReviews = async (
-    filters: {
-        status?: ReviewStatus;
-        categoryId?: string;
-        isPremium?: boolean;
-        title?: string;
-        rating?: number;
-        userId?: string;
-    },
-    paginationOptions: IPaginationOptions
-): Promise<IGenericResponse<any>> => {
-    const { 
-        status = ReviewStatus.PUBLISHED, 
-        categoryId, 
-        isPremium, 
-        title,
-        rating,
-        userId
-    } = filters;
-    
+const getAllReviews = (filters, paginationOptions) => __awaiter(void 0, void 0, void 0, function* () {
+    const { status = client_1.ReviewStatus.PUBLISHED, categoryId, isPremium, title, rating, userId } = filters;
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
-    
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
     // Construct where conditions based on filters
-    const whereConditions: any = {
+    const whereConditions = {
         status
     };
-    
     if (categoryId) {
         whereConditions.categoryId = categoryId;
     }
-    
     if (isPremium !== undefined) {
         whereConditions.isPremium = isPremium;
     }
-    
     if (title) {
         whereConditions.title = {
             contains: title,
             mode: 'insensitive'
         };
     }
-    
     if (rating) {
         whereConditions.rating = Number(rating);
     }
-    
     if (userId) {
         whereConditions.userId = userId;
     }
-    
     // Get reviews
-    const reviews = await prisma.review.findMany({
+    const reviews = yield models_1.default.review.findMany({
         where: whereConditions,
         include: {
             category: true,
@@ -146,7 +124,7 @@ const getAllReviews = async (
                 select: {
                     votes: {
                         where: {
-                            type: VoteType.UPVOTE
+                            type: client_1.VoteType.UPVOTE
                         }
                     },
                     comments: true
@@ -159,12 +137,10 @@ const getAllReviews = async (
         skip,
         take
     });
-    
     // Get total count
-    const total = await prisma.review.count({
+    const total = yield models_1.default.review.count({
         where: whereConditions
     });
-    
     // Format reviews for response
     const formattedReviews = reviews.map(review => {
         // For premium reviews, truncate description for non-subscribers
@@ -172,7 +148,6 @@ const getAllReviews = async (
         if (review.isPremium) {
             truncatedDescription = review.description.substring(0, 100) + '...';
         }
-        
         return {
             id: review.id,
             title: review.title,
@@ -193,7 +168,6 @@ const getAllReviews = async (
             comments: review._count.comments
         };
     });
-    
     return {
         meta: {
             page: Number(page),
@@ -202,16 +176,15 @@ const getAllReviews = async (
         },
         data: formattedReviews
     };
-};
-
+});
 /**
  * Get a single review by ID
  */
-const getReviewById = async (id: string, userId?: string) => {
-    const review = await prisma.review.findUnique({
+const getReviewById = (id, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const review = yield models_1.default.review.findUnique({
         where: {
             id,
-            status: ReviewStatus.PUBLISHED
+            status: client_1.ReviewStatus.PUBLISHED
         },
         include: {
             category: true,
@@ -267,24 +240,19 @@ const getReviewById = async (id: string, userId?: string) => {
             }
         }
     });
-    
     if (!review) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
     // Check if this is a premium review and if user has paid for it
     const hasPaid = review.payments.length > 0;
-    
     // If premium review and user hasn't paid, truncate description
     let reviewDescription = review.description;
     if (review.isPremium && !hasPaid && userId !== review.userId) {
         reviewDescription = review.description.substring(0, 100) + '...';
     }
-    
     // Count upvotes and downvotes
-    const upvotes = review.votes.filter(vote => vote.type === VoteType.UPVOTE).length;
-    const downvotes = review.votes.filter(vote => vote.type === VoteType.DOWNVOTE).length;
-    
+    const upvotes = review.votes.filter(vote => vote.type === client_1.VoteType.UPVOTE).length;
+    const downvotes = review.votes.filter(vote => vote.type === client_1.VoteType.DOWNVOTE).length;
     // Format comments
     const formattedComments = review.comments.map(comment => ({
         id: comment.id,
@@ -303,7 +271,6 @@ const getReviewById = async (id: string, userId?: string) => {
             updatedAt: reply.updatedAt
         }))
     }));
-    
     // Check if user has voted on this review
     let userVote = null;
     if (userId) {
@@ -312,7 +279,6 @@ const getReviewById = async (id: string, userId?: string) => {
             userVote = vote.type;
         }
     }
-    
     return {
         id: review.id,
         title: review.title,
@@ -338,67 +304,62 @@ const getReviewById = async (id: string, userId?: string) => {
         comments: formattedComments,
         hasPaid
     };
-};
-
+});
 /**
  * Update a review
  */
-const updateReview = async (id: string, userId: string, updateData: any, files?: IFile[]) => {
+const updateReview = (id, userId, updateData, files) => __awaiter(void 0, void 0, void 0, function* () {
     // Find the review
-    const review = await prisma.review.findUnique({
+    const review = yield models_1.default.review.findUnique({
         where: {
             id
         }
     });
-    
     if (!review) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
     // Check if user owns the review or is an admin
-    const user = await prisma.user.findUnique({
+    const user = yield models_1.default.user.findUnique({
         where: {
             id: userId
         }
     });
-    
-    if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
-        throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
+    if (review.userId !== userId && (user === null || user === void 0 ? void 0 : user.role) !== client_1.UserRole.ADMIN) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
     }
-    
     // Prepare update data
     const { title, description, rating, purchaseSource, categoryId, isPremium, premiumPrice } = updateData;
-    
-    const updatedData: any = {};
-    
-    if (title !== undefined) updatedData.title = title;
-    if (description !== undefined) updatedData.description = description;
-    if (rating !== undefined) updatedData.rating = Number(rating);
-    if (purchaseSource !== undefined) updatedData.purchaseSource = purchaseSource;
-    if (categoryId !== undefined) updatedData.categoryId = categoryId;
-    
+    const updatedData = {};
+    if (title !== undefined)
+        updatedData.title = title;
+    if (description !== undefined)
+        updatedData.description = description;
+    if (rating !== undefined)
+        updatedData.rating = Number(rating);
+    if (purchaseSource !== undefined)
+        updatedData.purchaseSource = purchaseSource;
+    if (categoryId !== undefined)
+        updatedData.categoryId = categoryId;
     // Admin can update premium status and price
-    if (user?.role === UserRole.ADMIN) {
-        if (isPremium !== undefined) updatedData.isPremium = Boolean(isPremium);
-        if (premiumPrice !== undefined) updatedData.premiumPrice = Number(premiumPrice);
+    if ((user === null || user === void 0 ? void 0 : user.role) === client_1.UserRole.ADMIN) {
+        if (isPremium !== undefined)
+            updatedData.isPremium = Boolean(isPremium);
+        if (premiumPrice !== undefined)
+            updatedData.premiumPrice = Number(premiumPrice);
     }
-    
     // If admin updates, keep status. If user updates, set back to DRAFT for review
-    if (user?.role !== UserRole.ADMIN && review.status === ReviewStatus.PUBLISHED) {
-        updatedData.status = ReviewStatus.DRAFT;
+    if ((user === null || user === void 0 ? void 0 : user.role) !== client_1.UserRole.ADMIN && review.status === client_1.ReviewStatus.PUBLISHED) {
+        updatedData.status = client_1.ReviewStatus.DRAFT;
     }
-    
     // Upload new images if provided
     if (files && files.length > 0) {
-        const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
+        const uploadedImages = yield fileUploader_1.fileUploader.uploadMultipleToCloudinary(files);
         const newImageUrls = uploadedImages.map(image => image.secure_url);
-        
         // Combine with existing images
         updatedData.images = [...review.images, ...newImageUrls];
     }
-    
     // Update the review
-    const updatedReview = await prisma.review.update({
+    const updatedReview = yield models_1.default.review.update({
         where: {
             id
         },
@@ -414,71 +375,61 @@ const updateReview = async (id: string, userId: string, updateData: any, files?:
             }
         }
     });
-    
     return updatedReview;
-};
-
+});
 /**
  * Delete a review
  */
-const deleteReview = async (id: string, userId: string) => {
+const deleteReview = (id, userId) => __awaiter(void 0, void 0, void 0, function* () {
     // Find the review
-    const review = await prisma.review.findUnique({
+    const review = yield models_1.default.review.findUnique({
         where: {
             id
         }
     });
-    
     if (!review) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
     // Check if user owns the review or is an admin
-    const user = await prisma.user.findUnique({
+    const user = yield models_1.default.user.findUnique({
         where: {
             id: userId
         }
     });
-    
-    if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
-        throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to delete this review');
+    if (review.userId !== userId && (user === null || user === void 0 ? void 0 : user.role) !== client_1.UserRole.ADMIN) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'You are not authorized to delete this review');
     }
-    
     // Delete associated comments
-    await prisma.comment.deleteMany({
+    yield models_1.default.comment.deleteMany({
         where: {
             reviewId: id
         }
     });
-    
     // Delete associated votes
-    await prisma.vote.deleteMany({
+    yield models_1.default.vote.deleteMany({
         where: {
             reviewId: id
         }
     });
-    
     // Delete the review
-    await prisma.review.delete({
+    yield models_1.default.review.delete({
         where: {
             id
         }
     });
-    
     return {
         id,
         message: 'Review deleted successfully'
     };
-};
-
+});
 /**
  * Get featured reviews for homepage
  */
-const getFeaturedReviews = async (limit: number = 6) => {
+const getFeaturedReviews = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (limit = 6) {
     // Get highest rated reviews
-    const highestRated = await prisma.review.findMany({
+    const highestRated = yield models_1.default.review.findMany({
         where: {
-            status: ReviewStatus.PUBLISHED
+            status: client_1.ReviewStatus.PUBLISHED
         },
         orderBy: {
             rating: 'desc'
@@ -495,18 +446,17 @@ const getFeaturedReviews = async (limit: number = 6) => {
                 select: {
                     votes: {
                         where: {
-                            type: VoteType.UPVOTE
+                            type: client_1.VoteType.UPVOTE
                         }
                     }
                 }
             }
         }
     });
-    
     // Get most voted reviews
-    const mostVoted = await prisma.review.findMany({
+    const mostVoted = yield models_1.default.review.findMany({
         where: {
-            status: ReviewStatus.PUBLISHED
+            status: client_1.ReviewStatus.PUBLISHED
         },
         orderBy: {
             votes: {
@@ -525,16 +475,15 @@ const getFeaturedReviews = async (limit: number = 6) => {
                 select: {
                     votes: {
                         where: {
-                            type: VoteType.UPVOTE
+                            type: client_1.VoteType.UPVOTE
                         }
                     }
                 }
             }
         }
     });
-    
     // Format reviews
-    const formatReview = (review: any) => ({
+    const formatReview = (review) => ({
         id: review.id,
         title: review.title,
         rating: review.rating,
@@ -545,19 +494,17 @@ const getFeaturedReviews = async (limit: number = 6) => {
         image: review.images.length > 0 ? review.images[0] : null,
         createdAt: review.createdAt
     });
-    
     return {
         highestRated: highestRated.map(formatReview),
         mostVoted: mostVoted.map(formatReview)
     };
-};
-
+});
 /**
  * Get related reviews
  */
-const getRelatedReviews = async (id: string, limit: number = 4) => {
+const getRelatedReviews = (id_1, ...args_1) => __awaiter(void 0, [id_1, ...args_1], void 0, function* (id, limit = 4) {
     // Get the category of the current review
-    const review = await prisma.review.findUnique({
+    const review = yield models_1.default.review.findUnique({
         where: {
             id
         },
@@ -565,19 +512,17 @@ const getRelatedReviews = async (id: string, limit: number = 4) => {
             categoryId: true
         }
     });
-    
     if (!review) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
     // Get related reviews in the same category
-    const relatedReviews = await prisma.review.findMany({
+    const relatedReviews = yield models_1.default.review.findMany({
         where: {
             categoryId: review.categoryId,
             id: {
                 not: id
             },
-            status: ReviewStatus.PUBLISHED
+            status: client_1.ReviewStatus.PUBLISHED
         },
         take: limit,
         include: {
@@ -591,14 +536,13 @@ const getRelatedReviews = async (id: string, limit: number = 4) => {
                 select: {
                     votes: {
                         where: {
-                            type: VoteType.UPVOTE
+                            type: client_1.VoteType.UPVOTE
                         }
                     }
                 }
             }
         }
     });
-    
     // Format reviews
     return relatedReviews.map(review => ({
         id: review.id,
@@ -611,18 +555,16 @@ const getRelatedReviews = async (id: string, limit: number = 4) => {
         image: review.images.length > 0 ? review.images[0] : null,
         createdAt: review.createdAt
     }));
-};
-
+});
 /**
  * Get reviews by user
  */
-const getUserReviews = async (userId: string, paginationOptions: IPaginationOptions) => {
+const getUserReviews = (userId, paginationOptions) => __awaiter(void 0, void 0, void 0, function* () {
     const { page = 1, limit = 10 } = paginationOptions;
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
     // Get user's reviews
-    const reviews = await prisma.review.findMany({
+    const reviews = yield models_1.default.review.findMany({
         where: {
             userId
         },
@@ -632,7 +574,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
                 select: {
                     votes: {
                         where: {
-                            type: VoteType.UPVOTE
+                            type: client_1.VoteType.UPVOTE
                         }
                     },
                     comments: true
@@ -645,14 +587,12 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         skip,
         take
     });
-    
     // Get total count
-    const total = await prisma.review.count({
+    const total = yield models_1.default.review.count({
         where: {
             userId
         }
     });
-    
     // Format reviews
     const formattedReviews = reviews.map(review => ({
         id: review.id,
@@ -666,7 +606,6 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         image: review.images.length > 0 ? review.images[0] : null,
         createdAt: review.createdAt
     }));
-    
     return {
         meta: {
             page: Number(page),
@@ -675,39 +614,33 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         },
         data: formattedReviews
     };
-};
-
+});
 /**
  * Remove image from review
  */
-const removeImage = async (reviewId: string, userId: string, imageUrl: string) => {
+const removeImage = (reviewId, userId, imageUrl) => __awaiter(void 0, void 0, void 0, function* () {
     // Find the review
-    const review = await prisma.review.findUnique({
+    const review = yield models_1.default.review.findUnique({
         where: {
             id: reviewId
         }
     });
-    
     if (!review) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
     // Check if user owns the review or is an admin
-    const user = await prisma.user.findUnique({
+    const user = yield models_1.default.user.findUnique({
         where: {
             id: userId
         }
     });
-    
-    if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
-        throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
+    if (review.userId !== userId && (user === null || user === void 0 ? void 0 : user.role) !== client_1.UserRole.ADMIN) {
+        throw new ApiError_1.default(http_status_codes_1.StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
     }
-    
     // Remove the image from the array
     const updatedImages = review.images.filter(img => img !== imageUrl);
-    
     // Update the review
-    const updatedReview = await prisma.review.update({
+    const updatedReview = yield models_1.default.review.update({
         where: {
             id: reviewId
         },
@@ -715,11 +648,9 @@ const removeImage = async (reviewId: string, userId: string, imageUrl: string) =
             images: updatedImages
         }
     });
-    
     return updatedReview;
-};
-
-export const ReviewService = {
+});
+exports.ReviewService = {
     createReview,
     getAllReviews,
     getReviewById,

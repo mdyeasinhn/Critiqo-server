@@ -1,22 +1,22 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import catchAsync from "../../shared/catchAsync";
 import { VoteService } from "../services/vote.service";
 import sendResponse from "../../shared/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import { VoteType } from "@prisma/client";
+import { UserRole, VoteType } from "@prisma/client";
 
-interface AuthenticatedRequest extends Request {
-    user: {
-        userId: string;
-        role: string;
-        email: string; 
-    };
+interface IAuthUser {
+    userId: string;
+    role: UserRole;
+    email: string;
 }
 
-/**
- * Add a vote to a review
- */
-const addVote = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+interface AuthenticatedRequest extends Request {
+    user: IAuthUser;
+}
+
+
+const addVote = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const { reviewId, voteType } = req.body;
     const { userId } = req.user;
     
@@ -40,10 +40,8 @@ const addVote = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
     });
 });
 
-/**
- * Get votes for a review
- */
-const getVotes = catchAsync(async (req: Request, res: Response) => {
+
+const getVotes = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { reviewId } = req.params;
     
     const result = await VoteService.getVotes(reviewId);
@@ -56,10 +54,8 @@ const getVotes = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-/**
- * Get user's vote on a review
- */
-const getUserVote = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+
+const getUserVote = catchAsync(async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const { reviewId } = req.params;
     const { userId } = req.user;
     
