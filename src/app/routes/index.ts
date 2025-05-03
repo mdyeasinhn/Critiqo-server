@@ -7,6 +7,7 @@ import { ReviewRoutes } from '../modules/routes/review.route';
 import { CategoryRoutes } from '../modules/routes/category.route';
 import { VoteRoutes } from '../modules/routes/vote.routes';
 import { CommentRoutes } from '../modules/routes/comment.routes';
+import { GuestRoutes } from '../modules/routes/guest.route';
 
 
 const router = express.Router();
@@ -24,6 +25,10 @@ const moduleRoutes = [
     {
         path: '/admin',
         route: AdminRoutes
+    },
+    {
+        path: '/guest',
+        route: GuestRoutes
     },
     {
         path: '/reviews',
