@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/", GuestController.getAllFromDB);
 
 
-
+router.get("/:id", GuestController.getByIdFromDB);
 
 
 export const GuestRoutes = router;
