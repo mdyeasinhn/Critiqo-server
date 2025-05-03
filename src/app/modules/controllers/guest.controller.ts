@@ -22,6 +22,19 @@ const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getByIdFromDB = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await GuestService.getByIdFromDB(id);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: 'Guest retrieval successfully!', 
+        data: result,
+    });
+});
+
 export const GuestController = {
-    getAllFromDB
+    getAllFromDB,
+    getByIdFromDB
 }

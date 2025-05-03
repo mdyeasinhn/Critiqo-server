@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Guest, Prisma } from "@prisma/client";
 import { pagenationHelpars } from "../../helpers/pagenationHelper";
 import { IGuestFilterRequest } from "../../interface/guest";
 import { IPagenationOptions } from "../../interface/pagination";
@@ -68,7 +68,19 @@ const getAllFromDB = async (
     };
 };
 
+const getByIdFromDB = async (id: string): Promise<Guest | null> => {
+    const result = await prisma.guest.findUnique({
+        where: {
+            id,
+            isDeleteAt: false,
+        }
+    });
+    return result;
+};
+
+
 
 export const GuestService ={
-    getAllFromDB
+    getAllFromDB,
+    getByIdFromDB
 }
