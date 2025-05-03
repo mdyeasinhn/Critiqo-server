@@ -1,40 +1,27 @@
-import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
+import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
+import { IJwtPayload } from '../interface/common';
 
-const generateToken = (payload: any, secret: Secret, expiresIn: string) => {
-    // Make sure payload includes userId if available
-    if (payload.id && !payload.userId) {
-        payload.userId = payload.id;
-    }
 
-    // Create token with payload
-    const token = jwt.sign(
-        payload,
-        secret,
-        {
-            algorithm: 'HS256',
-            expiresIn
-        }
-    );
+const generateToken = (payload: IJwtPayload, secret: Secret, expiresIn: string | number): string => {
+    const options = {
+        expiresIn: expiresIn as any
+    };
     
-    return token;
+    return jwt.sign(payload, secret, options);
 };
 
-const verifyToken = (token: string, secret: Secret) => {
+
+const verifyToken = (token: string, secret: Secret): JwtPayload & IJwtPayload => {
     try {
-        // Verify and decode token
-        const decoded = jwt.verify(token, secret) as JwtPayload;
+     
+        const decoded = jwt.verify(token, secret) as JwtPayload & IJwtPayload;
         
-        // Log decoded token for debugging
+       
         console.log('Decoded token:', decoded);
-        
-        // Make sure userId is present
-        if (decoded.id && !decoded.userId) {
-            decoded.userId = decoded.id;
-        }
         
         return decoded;
     } catch (error) {
-        // Log error and re-throw
+      
         console.error('Token verification error:', error);
         throw error;
     }
