@@ -6,10 +6,22 @@ import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
 import { Request } from "express";
 
+// Define the authentication interface
+interface IAuthUser {
+    userId: string;
+    role: UserRole;
+    email: string;
+}
+
+// Extend the Express Request type
+interface AuthenticatedRequest extends Request {
+    user: IAuthUser;
+}
+
 /**
  * Create a new review
  */
-const createReview = async (req: Request) => {
+const createReview = async (req: AuthenticatedRequest) => {
     const userId = req.user.userId;
     const files = req.files as IFile[];
     
