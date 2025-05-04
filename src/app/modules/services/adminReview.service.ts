@@ -195,9 +195,9 @@ const getReviewStatsByStatus = async () => {
 };
 
 /**
- * Publish or Unpublish a review with optional premium settings
+ * Update review status with premium settings and moderation notes
  * @param reviewId Review ID
- * @param status New status (PUBLISHED or UNPUBLISHED)
+ * @param status New status (PUBLISHED, UNPUBLISHED, or DRAFT)
  * @param premiumSettings Optional premium settings
  * @param moderationNote Optional moderation note
  * @returns Updated review
@@ -230,7 +230,7 @@ const updateReviewStatus = async (
         };
         
         // Add premium settings if provided
-        if (premiumSettings) {
+        if (premiumSettings !== undefined) {
             // Validate premium price if review is premium
             if (premiumSettings.isPremium && (!premiumSettings.premiumPrice || premiumSettings.premiumPrice <= 0)) {
                 throw new ApiError(
@@ -313,6 +313,7 @@ const unpublishReview = async (reviewId: string, moderationNote?: string) => {
 export const AdminReviewService = {
     getAllReviewsForAdmin,
     getReviewStatsByStatus,
+    updateReviewStatus,
     publishReview,
     unpublishReview
 };

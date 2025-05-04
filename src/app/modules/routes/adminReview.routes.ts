@@ -21,36 +21,20 @@ router.get(
     AdminReviewController.getReviewStats
 );
 
-// Publish a review (with optional premium settings)
+// Single unified route for managing review status (publish, unpublish, premium settings)
 router.patch(
-    '/reviews/:id/publish',
+    '/reviews/:id',
     (req: Request, res: Response, next: NextFunction) => {
         try {
-            if (adminReviewValidation && adminReviewValidation.publishReview) {
-                req.body = adminReviewValidation.publishReview.parse(req.body);
+            if (adminReviewValidation && adminReviewValidation.manageReview) {
+                req.body = adminReviewValidation.manageReview.parse(req.body);
             }
             return next();
         } catch (error) {
             next(error);
         }
     },
-    AdminReviewController.publishReview
-);
-
-// Unpublish a review
-router.patch(
-    '/reviews/:id/unpublish',
-    (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (adminReviewValidation && adminReviewValidation.unpublishReview) {
-                req.body = adminReviewValidation.unpublishReview.parse(req.body);
-            }
-            return next();
-        } catch (error) {
-            next(error);
-        }
-    },
-    AdminReviewController.unpublishReview
+    AdminReviewController.manageReview
 );
 
 export const AdminReviewRoutes = router;

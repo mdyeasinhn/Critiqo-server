@@ -1,7 +1,12 @@
 import { z } from "zod";
+import { ReviewStatus } from "@prisma/client";
 
-// Validation schema for publishing a review
-const publishReview = z.object({
+// Unified validation schema for managing reviews
+const manageReview = z.object({
+    status: z.nativeEnum(ReviewStatus, {
+        required_error: "Status is required",
+        invalid_type_error: "Status must be valid"
+    }),
     moderationNote: z.string().optional(),
     isPremium: z.boolean().optional(),
     premiumPrice: z.number().positive("Premium price must be greater than 0").optional()
@@ -19,12 +24,6 @@ const publishReview = z.object({
     }
 );
 
-// Validation schema for unpublishing a review
-const unpublishReview = z.object({
-    moderationNote: z.string().optional()
-});
-
 export const adminReviewValidation = {
-    publishReview,
-    unpublishReview
+    manageReview
 };
