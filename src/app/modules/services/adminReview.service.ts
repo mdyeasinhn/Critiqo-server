@@ -16,6 +16,7 @@ const getAllReviewsForAdmin = async (
         categoryId?: string;
         userId?: string;
         searchTerm?: string;
+        isPremium?: boolean;
     },
     paginationOptions: IPaginationOptions
 ): Promise<IGenericResponse<any>> => {
@@ -23,7 +24,8 @@ const getAllReviewsForAdmin = async (
         status = 'ALL', 
         categoryId, 
         userId,
-        searchTerm
+        searchTerm,
+        isPremium
     } = filters;
     
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
@@ -47,6 +49,11 @@ const getAllReviewsForAdmin = async (
     // Filter by user if provided
     if (userId) {
         whereConditions.userId = userId;
+    }
+    
+    // Filter by premium status if provided
+    if (isPremium !== undefined) {
+        whereConditions.isPremium = isPremium;
     }
     
     // Search by title or description
@@ -158,7 +165,8 @@ const getReviewStatsByStatus = async () => {
         total: 0,
         published: 0,
         draft: 0,
-        unpublished: 0
+        unpublished: 0,
+        premium: 0
     };
     
     // Calculate total
@@ -176,19 +184,31 @@ const getReviewStatsByStatus = async () => {
         stats.total += count;
     });
     
+    // Get count of premium reviews
+    stats.premium = await prisma.review.count({
+        where: {
+            isPremium: true
+        }
+    });
+    
     return stats;
 };
 
 /**
- * Change review status (publish or unpublish)
+ * Publish or Unpublish a review with optional premium settings
  * @param reviewId Review ID
- * @param status New status
+ * @param status New status (PUBLISHED or UNPUBLISHED)
+ * @param premiumSettings Optional premium settings
  * @param moderationNote Optional moderation note
  * @returns Updated review
  */
-const changeReviewStatus = async (
+const updateReviewStatus = async (
     reviewId: string,
     status: ReviewStatus,
+    premiumSettings?: {
+        isPremium: boolean;
+        premiumPrice?: number;
+    },
     moderationNote?: string
 ) => {
     try {
@@ -203,15 +223,32 @@ const changeReviewStatus = async (
             throw new ApiError(StatusCodes.NOT_FOUND, "Review not found");
         }
         
-        // Update the review status
+        // Prepare update data
+        const updateData: any = {
+            status,
+            moderationNote: moderationNote || null
+        };
+        
+        // Add premium settings if provided
+        if (premiumSettings) {
+            // Validate premium price if review is premium
+            if (premiumSettings.isPremium && (!premiumSettings.premiumPrice || premiumSettings.premiumPrice <= 0)) {
+                throw new ApiError(
+                    StatusCodes.BAD_REQUEST, 
+                    "Premium price is required and must be greater than 0 for premium reviews"
+                );
+            }
+            
+            updateData.isPremium = premiumSettings.isPremium;
+            updateData.premiumPrice = premiumSettings.isPremium ? premiumSettings.premiumPrice : null;
+        }
+        
+        // Update the review
         const updatedReview = await prisma.review.update({
             where: {
                 id: reviewId
             },
-            data: {
-                status,
-                moderationNote: moderationNote || null
-            },
+            data: updateData,
             include: {
                 category: true,
                 user: {
@@ -229,6 +266,8 @@ const changeReviewStatus = async (
             id: updatedReview.id,
             title: updatedReview.title,
             status: updatedReview.status,
+            isPremium: updatedReview.isPremium,
+            premiumPrice: updatedReview.premiumPrice,
             moderationNote: updatedReview.moderationNote,
             categoryName: updatedReview.category.name,
             userName: updatedReview.user.name,
@@ -236,21 +275,29 @@ const changeReviewStatus = async (
             updatedAt: updatedReview.updatedAt
         };
     } catch (error) {
-        console.error(`Error changing review status to ${status}:`, error);
+        console.error(`Error updating review status to ${status}:`, error);
         throw error instanceof ApiError 
             ? error 
-            : new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to change review status to ${status}`);
+            : new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to update review status to ${status}`);
     }
 };
 
 /**
- * Publish a review
+ * Publish a review with optional premium settings
  * @param reviewId Review ID
+ * @param premiumSettings Optional premium settings
  * @param moderationNote Optional moderation note
  * @returns Published review
  */
-const publishReview = async (reviewId: string, moderationNote?: string) => {
-    return changeReviewStatus(reviewId, ReviewStatus.PUBLISHED, moderationNote);
+const publishReview = async (
+    reviewId: string,
+    premiumSettings?: {
+        isPremium: boolean;
+        premiumPrice?: number;
+    },
+    moderationNote?: string
+) => {
+    return updateReviewStatus(reviewId, ReviewStatus.PUBLISHED, premiumSettings, moderationNote);
 };
 
 /**
@@ -260,7 +307,7 @@ const publishReview = async (reviewId: string, moderationNote?: string) => {
  * @returns Unpublished review
  */
 const unpublishReview = async (reviewId: string, moderationNote?: string) => {
-    return changeReviewStatus(reviewId, ReviewStatus.UNPUBLISHED, moderationNote);
+    return updateReviewStatus(reviewId, ReviewStatus.UNPUBLISHED, undefined, moderationNote);
 };
 
 export const AdminReviewService = {

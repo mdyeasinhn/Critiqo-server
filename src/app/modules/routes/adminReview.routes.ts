@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { UserRole } from '@prisma/client';
 import auth from '../../../middleware/auth';
 import { AdminReviewController } from '../controllers/adminReview.controller';
+import { adminReviewValidation } from '../validation/adminReview.validation';
 
 const router = express.Router();
 
@@ -20,12 +21,18 @@ router.get(
     AdminReviewController.getReviewStats
 );
 
-// Publish a review
+// Publish a review (with optional premium settings)
 router.patch(
     '/reviews/:id/publish',
     (req: Request, res: Response, next: NextFunction) => {
-        // Validation could be added here if needed
-        return next();
+        try {
+            if (adminReviewValidation && adminReviewValidation.publishReview) {
+                req.body = adminReviewValidation.publishReview.parse(req.body);
+            }
+            return next();
+        } catch (error) {
+            next(error);
+        }
     },
     AdminReviewController.publishReview
 );
@@ -34,8 +41,14 @@ router.patch(
 router.patch(
     '/reviews/:id/unpublish',
     (req: Request, res: Response, next: NextFunction) => {
-        // Validation could be added here if needed
-        return next();
+        try {
+            if (adminReviewValidation && adminReviewValidation.unpublishReview) {
+                req.body = adminReviewValidation.unpublishReview.parse(req.body);
+            }
+            return next();
+        } catch (error) {
+            next(error);
+        }
     },
     AdminReviewController.unpublishReview
 );

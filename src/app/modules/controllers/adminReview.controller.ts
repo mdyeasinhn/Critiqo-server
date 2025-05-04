@@ -12,7 +12,7 @@ import { AdminReviewService } from "../services/adminReview.service";
  */
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
     // Extract filters from query parameters
-    const filters: any = pick(req.query, ['status', 'categoryId', 'userId', 'searchTerm']);
+    const filters: any = pick(req.query, ['status', 'categoryId', 'userId', 'searchTerm', 'isPremium']);
     
     // Convert status string to enum if provided
     if (filters.status && filters.status !== 'ALL') {
@@ -21,6 +21,11 @@ const getAllReviews = catchAsync(async (req: Request, res: Response) => {
         } else {
             filters.status = 'ALL';
         }
+    }
+    
+    // Convert isPremium to boolean if provided
+    if (filters.isPremium !== undefined) {
+        filters.isPremium = filters.isPremium === 'true';
     }
     
     // Extract pagination options
@@ -52,18 +57,45 @@ const getReviewStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 /**
- * Publish a review
+ * Publish a review with optional premium settings
  */
 const publishReview = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { moderationNote } = req.body;
+    const { moderationNote, isPremium, premiumPrice } = req.body;
     
-    const result = await AdminReviewService.publishReview(id, moderationNote);
+    // Prepare premium settings if provided
+    let premiumSettings;
+    if (isPremium !== undefined) {
+        // Validate premium price if review is premium
+        if (isPremium && (!premiumPrice || premiumPrice <= 0)) {
+            return sendResponse(res, {
+                statusCode: StatusCodes.BAD_REQUEST,
+                success: false,
+                message: "Premium price is required and must be greater than 0 for premium reviews",
+                data: null
+            });
+        }
+        
+        premiumSettings = {
+            isPremium,
+            premiumPrice
+        };
+    }
+    
+    const result = await AdminReviewService.publishReview(id, premiumSettings, moderationNote);
+
+    // Create appropriate response message
+    let message = "Review published successfully!";
+    if (premiumSettings) {
+        message = premiumSettings.isPremium 
+            ? "Review published as premium successfully!" 
+            : "Review published as normal successfully!";
+    }
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
-        message: "Review published successfully!",
+        message,
         data: result
     });
 });
