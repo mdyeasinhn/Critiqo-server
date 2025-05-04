@@ -657,6 +657,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
     const formattedReviews = reviews.map(review => ({
         id: review.id,
         title: review.title,
+        desciption :review.description,
         rating: review.rating,
         status: review.status,
         isPremium: review.isPremium,
