@@ -3,6 +3,8 @@ import { StatusCodes } from "http-status-codes"
 import { TErrorSources } from "../app/interface/error";
 import { ZodError } from "zod";
 import handleZodError from "../app/error/handleZodError";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import handlePrismaError from "../app/error/handlePrismaError";
 
 const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
 
@@ -26,6 +28,8 @@ const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFun
         errorSources = simplifiedError?.errorSources;
 
     }
+
+
     console.log(err);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         success: false,

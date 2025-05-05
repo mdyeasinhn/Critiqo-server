@@ -69,7 +69,8 @@ const getAllFromDB = async (
 };
 
 const getByIdFromDB = async (id: string): Promise<Guest | null> => {
-    const result = await prisma.guest.findUnique({
+    
+    const result = await prisma.guest.findUniqueOrThrow({
         where: {
             id,
             isDeleteAt: false,
