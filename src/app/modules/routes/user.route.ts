@@ -9,7 +9,7 @@ import { UserRole } from '@prisma/client';
 const router = express.Router();
 
 router.get('/me',
-    auth( UserRole.ADMIN, UserRole.GUEST),
+    auth(UserRole.ADMIN, UserRole.GUEST),
     UserController.getMyProfile
 );
 
@@ -19,7 +19,7 @@ router.get('/',
 );
 // In user.route.ts
 router.post("/create-admin",
-     auth(UserRole.ADMIN),
+    auth(UserRole.ADMIN),
     fileUploader.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
         console.log('File:', req.file);
@@ -43,7 +43,7 @@ router.post("/create-guest",
 );
 
 router.patch("/update-my-profile",
-    auth( UserRole.ADMIN, UserRole.GUEST),
+    auth(UserRole.ADMIN, UserRole.GUEST),
     fileUploader.upload.single("file"),
     (req: Request, res: Response, next: NextFunction) => {
         req.body = JSON.parse(req.body.data)

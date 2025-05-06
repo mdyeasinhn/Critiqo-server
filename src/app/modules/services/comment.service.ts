@@ -8,8 +8,8 @@ import { IPaginationOptions } from "../../interface/file";
  * Add a comment to a review
  */
 const addComment = async (
-    reviewId: string, 
-    userId: string, 
+    reviewId: string,
+    userId: string,
     content: string,
     parentId?: string
 ) => {
@@ -27,19 +27,19 @@ const addComment = async (
             }
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found or not published');
     }
-    
+
     // If premium review, verify user has paid or is the author
     if (review.isPremium && review.userId !== userId && review.payments.length === 0) {
         throw new ApiError(
-            StatusCodes.FORBIDDEN, 
+            StatusCodes.FORBIDDEN,
             'You need to purchase this premium review to comment on it'
         );
     }
-    
+
     // If it's a reply, check if parent comment exists
     if (parentId) {
         const parentComment = await prisma.comment.findUnique({
@@ -48,12 +48,12 @@ const addComment = async (
                 reviewId // Ensure parent comment belongs to the same review
             }
         });
-        
+
         if (!parentComment) {
             throw new ApiError(StatusCodes.NOT_FOUND, 'Parent comment not found');
         }
     }
-    
+
     // Create the comment
     const comment = await prisma.comment.create({
         data: {
@@ -71,7 +71,7 @@ const addComment = async (
             }
         }
     });
-    
+
     return {
         id: comment.id,
         content: comment.content,
@@ -94,18 +94,18 @@ const getReviewComments = async (
     const { page = 1, limit = 10 } = paginationOptions;
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
+
     // Check if review exists
     const review = await prisma.review.findUnique({
         where: {
             id: reviewId
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Get top-level comments (no parent)
     const comments = await prisma.comment.findMany({
         where: {
@@ -144,7 +144,7 @@ const getReviewComments = async (
         skip,
         take
     });
-    
+
     // Get total count of top-level comments
     const total = await prisma.comment.count({
         where: {
@@ -152,13 +152,14 @@ const getReviewComments = async (
             parentId: null
         }
     });
-    
+
     // Format comments
     const formattedComments = comments.map(comment => ({
         id: comment.id,
         content: comment.content,
         author: comment.user.name,
         authorId: comment.user.id,
+        reviewId: comment.reviewId,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
         replyCount: comment._count.replies,
@@ -172,7 +173,7 @@ const getReviewComments = async (
             updatedAt: reply.updatedAt
         }))
     }));
-    
+
     return {
         meta: {
             page: Number(page),
@@ -197,19 +198,19 @@ const updateComment = async (
             id: commentId
         }
     });
-    
+
     if (!comment) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found');
     }
-    
+
     // Check if user is the comment author
     if (comment.userId !== userId) {
         throw new ApiError(
-            StatusCodes.FORBIDDEN, 
+            StatusCodes.FORBIDDEN,
             'You are not authorized to update this comment'
         );
     }
-    
+
     // Update the comment
     const updatedComment = await prisma.comment.update({
         where: {
@@ -227,7 +228,7 @@ const updateComment = async (
             }
         }
     });
-    
+
     return {
         id: updatedComment.id,
         content: updatedComment.content,
@@ -254,19 +255,19 @@ const deleteComment = async (
             id: commentId
         }
     });
-    
+
     if (!comment) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found');
     }
-    
+
     // Check if user is authorized (comment author or admin)
     if (comment.userId !== userId && !isAdmin) {
         throw new ApiError(
-            StatusCodes.FORBIDDEN, 
+            StatusCodes.FORBIDDEN,
             'You are not authorized to delete this comment'
         );
     }
-    
+
     // Handle deletion of parent comment with replies
     if (!comment.parentId) {
         // First, check if this comment has replies
@@ -275,7 +276,7 @@ const deleteComment = async (
                 parentId: commentId
             }
         });
-        
+
         if (replyCount > 0) {
             // Update content instead of deleting
             await prisma.comment.update({
@@ -283,12 +284,12 @@ const deleteComment = async (
                     id: commentId
                 },
                 data: {
-                    content: isAdmin ? 
-                        '[This comment was removed by an administrator]' : 
+                    content: isAdmin ?
+                        '[This comment was removed by an administrator]' :
                         '[This comment was deleted by the user]'
                 }
             });
-            
+
             return {
                 id: commentId,
                 message: 'Comment content removed but kept for reply context',
@@ -296,14 +297,14 @@ const deleteComment = async (
             };
         }
     }
-    
+
     // If no replies or it's a reply itself, delete the comment
     await prisma.comment.delete({
         where: {
             id: commentId
         }
     });
-    
+
     return {
         id: commentId,
         message: 'Comment deleted successfully'
@@ -320,18 +321,18 @@ const getCommentReplies = async (
     const { page = 1, limit = 10 } = paginationOptions;
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
+
     // Check if comment exists
     const comment = await prisma.comment.findUnique({
         where: {
             id: commentId
         }
     });
-    
+
     if (!comment) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found');
     }
-    
+
     // Get replies to the comment
     const replies = await prisma.comment.findMany({
         where: {
@@ -351,14 +352,14 @@ const getCommentReplies = async (
         skip,
         take
     });
-    
+
     // Get total count of replies
     const total = await prisma.comment.count({
         where: {
             parentId: commentId
         }
     });
-    
+
     // Format replies
     const formattedReplies = replies.map(reply => ({
         id: reply.id,
@@ -369,7 +370,7 @@ const getCommentReplies = async (
         createdAt: reply.createdAt,
         updatedAt: reply.updatedAt
     }));
-    
+
     return {
         meta: {
             page: Number(page),
