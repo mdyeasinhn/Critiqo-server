@@ -203,11 +203,48 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
     } 
     return { ...userInfo, ...profileInfo }
 
+};
+
+
+
+const softDeleteFromDB = async (id: string) => {
+
+    await prisma.user.findUniqueOrThrow({
+        where: {
+            id,
+            isDeleteAt: false
+        }
+    });
+
+    const result = await prisma.$transaction(async (transationClient) => {
+        const userDeletedData = await transationClient.user.update({
+            where: {
+                id
+            },
+            data: {
+                isDeleteAt: true
+            }
+        });
+        await transationClient.user.update({
+            where: {
+                email: userDeletedData.email
+            },
+            data: {
+                status: UserStatus.DELETED
+            }
+        });
+
+        return userDeletedData
+    });
+
+    return result
 }
+
 export const UserService = {
     createAdmin,
     createGuest,
     getAllUserFromDB,
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    softDeleteFromDB
 }

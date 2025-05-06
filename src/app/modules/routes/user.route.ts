@@ -51,4 +51,9 @@ router.patch("/update-my-profile",
     }
 );
 
+router.delete("/soft/:id",
+   auth(UserRole.ADMIN),
+    UserController.softDeleteIntoDB
+);
+
 export const UserRoutes = router
