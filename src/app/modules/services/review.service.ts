@@ -303,6 +303,7 @@ const getReviewById = async (id: string, userId?: string) => {
     const formattedComments = review.comments.map(comment => ({
         id: comment.id,
         content: comment.content,
+        reviewId: comment.reviewId,
         author: comment.user.name,
         authorId: comment.user.id,
         createdAt: comment.createdAt,

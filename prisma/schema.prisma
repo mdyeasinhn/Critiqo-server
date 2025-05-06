@@ -44,14 +44,14 @@ model User {
   status             UserStatus @default(ACTIVE)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
-
+  isDeleteAt         Boolean    @default(false)
   // Relations
-  admin    Admin?
-  guest    Guest?
-  reviews  Review[]
-  comments Comment[]
-  votes    Vote[]
-  payments Payment[]
+  admin              Admin?
+  guest              Guest?
+  reviews            Review[]
+  comments           Comment[]
+  votes              Vote[]
+  payments           Payment[]
 
   @@map("users")
 }
@@ -173,13 +173,13 @@ model Vote {
 }
 
 model Payment {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   amount        Float
-  status        PaymentStatus 
+  status        PaymentStatus
   transactionId String?
   reviewId      String
   userId        String
-  createdAt     DateTime @default(now())
+  createdAt     DateTime      @default(now())
 
   review Review @relation(fields: [reviewId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
