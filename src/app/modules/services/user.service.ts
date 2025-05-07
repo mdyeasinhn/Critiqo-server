@@ -26,7 +26,7 @@ const createAdmin = async (req: Request) => {
         role: UserRole.ADMIN,
     }
 
-    const result = await prisma.$transaction(async (transctionClient : any) => {
+    const result = await prisma.$transaction(async (transctionClient: any) => {
         await transctionClient.user.create({
             data: userData,
         });
@@ -40,7 +40,7 @@ const createAdmin = async (req: Request) => {
     return result
 }
 
-const createGuest = async (req : Request) => {
+const createGuest = async (req: Request) => {
     const file = req.file as IFile;
     if (file) {
         const uploadToCloudinary = await fileUploader.uploadToCloudinary(file)
@@ -57,7 +57,7 @@ const createGuest = async (req : Request) => {
         role: UserRole.GUEST,
     }
 
-    const result = await prisma.$transaction(async (transctionClient : any) => {
+    const result = await prisma.$transaction(async (transctionClient: any) => {
         await transctionClient.user.create({
             data: userData,
         });
@@ -77,6 +77,11 @@ const getAllUserFromDB = async (params: any, options: IPagenationOptions) => {
     const { searchTerm, ...filterData } = params;
 
     const andConditions: Prisma.UserWhereInput[] = [];
+
+    // Only fetch users with status 'ACTIVE'
+    andConditions.push({
+        status: 'ACTIVE'
+    });
 
     // If there's a search term, create OR conditions to search by name or email
     if (params.searchTerm) {
@@ -166,7 +171,7 @@ const getMyProfile = async (user: IAuthUser) => {
                 email: userInfo.email
             }
         })
-    } 
+    }
     return { ...userInfo, ...profileInfo }
 }
 
@@ -200,14 +205,51 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
             },
             data: req.body
         })
-    } 
+    }
     return { ...userInfo, ...profileInfo }
 
+};
+
+
+
+const softDeleteFromDB = async (id: string) => {
+
+    await prisma.user.findUniqueOrThrow({
+        where: {
+            id,
+            isDeleteAt: false
+        }
+    });
+
+    const result = await prisma.$transaction(async (transationClient) => {
+        const userDeletedData = await transationClient.user.update({
+            where: {
+                id
+            },
+            data: {
+                isDeleteAt: true
+            }
+        });
+        await transationClient.user.update({
+            where: {
+                email: userDeletedData.email
+            },
+            data: {
+                status: UserStatus.DELETED
+            }
+        });
+
+        return userDeletedData
+    });
+
+    return result
 }
+
 export const UserService = {
     createAdmin,
     createGuest,
     getAllUserFromDB,
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    softDeleteFromDB
 }

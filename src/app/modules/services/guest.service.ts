@@ -4,7 +4,7 @@ import { IGuestFilterRequest } from "../../interface/guest";
 import { IPagenationOptions } from "../../interface/pagination";
 import { guestSearchableFields } from "../../constants/doctor.constant";
 import prisma from "../models";
-import e from "express";
+
 
 
 
@@ -69,7 +69,8 @@ const getAllFromDB = async (
 };
 
 const getByIdFromDB = async (id: string): Promise<Guest | null> => {
-    const result = await prisma.guest.findUnique({
+    
+    const result = await prisma.guest.findUniqueOrThrow({
         where: {
             id,
             isDeleteAt: false,

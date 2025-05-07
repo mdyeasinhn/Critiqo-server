@@ -1,10 +1,11 @@
 import prisma from "../models";
 import { IFile, IPaginationOptions, IGenericResponse } from "../../interface/file";
-import { ReviewStatus, UserRole, UserStatus, VoteType } from "@prisma/client";
+import { ReviewStatus, UserRole,  VoteType } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
 import { Request } from "express";
+import { pagenationHelpars } from "../../helpers/pagenationHelper";
 
 // Define the authentication interface
 interface IAuthUser {
@@ -81,55 +82,68 @@ const getAllReviews = async (
     filters: {
         status?: ReviewStatus;
         categoryId?: string;
-        isPremium?: boolean;
+        isPremium?: string;
         title?: string;
+        sortOrder?: 'asc' | 'desc';
         rating?: number;
         userId?: string;
     },
     paginationOptions: IPaginationOptions
 ): Promise<IGenericResponse<any>> => {
-    const { 
-        status = ReviewStatus.PUBLISHED, 
-        categoryId, 
-        isPremium, 
+    const {
+        status,
+        categoryId,
+        isPremium,
         title,
         rating,
         userId
     } = filters;
-    
-    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
-    
-    const skip = (page - 1) * limit;
+    console.log(isPremium)
+
+    // const { page = 1, limit = 6, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
+
+    const { limit, page, skip, sortBy,
+        sortOrder } = pagenationHelpars.calculatePagenation(paginationOptions);
+
+    // const skip = Math.max((page - 1) * limit, 0);
     const take = Number(limit);
-    
+
     // Construct where conditions based on filters
     const whereConditions: any = {
-        status
+        status: status || undefined
     };
-    
+
     if (categoryId) {
         whereConditions.categoryId = categoryId;
     }
-    
+
     if (isPremium !== undefined) {
-        whereConditions.isPremium = isPremium;
+        whereConditions.isPremium = isPremium || undefined;
     }
-    
+    if (typeof isPremium === 'boolean') {
+        filters.isPremium = whereConditions.isPremium;
+    }
+    if (isPremium === "true") {
+        whereConditions.isPremium = true;
+    } else if (isPremium === "false") {
+        whereConditions.isPremium = false;
+    }
+
     if (title) {
         whereConditions.title = {
             contains: title,
             mode: 'insensitive'
         };
     }
-    
+
     if (rating) {
         whereConditions.rating = Number(rating);
     }
-    
+
     if (userId) {
         whereConditions.userId = userId;
     }
-    
+
     // Get reviews
     const reviews = await prisma.review.findMany({
         where: whereConditions,
@@ -154,17 +168,17 @@ const getAllReviews = async (
             }
         },
         orderBy: {
-            [sortBy]: sortOrder
+            [sortBy]: sortOrder || 'asc'
         },
         skip,
         take
     });
-    
+
     // Get total count
     const total = await prisma.review.count({
         where: whereConditions
     });
-    
+
     // Format reviews for response
     const formattedReviews = reviews.map(review => {
         // For premium reviews, truncate description for non-subscribers
@@ -172,7 +186,7 @@ const getAllReviews = async (
         if (review.isPremium) {
             truncatedDescription = review.description.substring(0, 100) + '...';
         }
-        
+
         return {
             id: review.id,
             title: review.title,
@@ -193,7 +207,7 @@ const getAllReviews = async (
             comments: review._count.comments
         };
     });
-    
+
     return {
         meta: {
             page: Number(page),
@@ -289,6 +303,7 @@ const getReviewById = async (id: string, userId?: string) => {
     const formattedComments = review.comments.map(comment => ({
         id: comment.id,
         content: comment.content,
+        reviewId: comment.reviewId,
         author: comment.user.name,
         authorId: comment.user.id,
         createdAt: comment.createdAt,
@@ -657,6 +672,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
     const formattedReviews = reviews.map(review => ({
         id: review.id,
         title: review.title,
+        desciption :review.description,
         rating: review.rating,
         status: review.status,
         isPremium: review.isPremium,
