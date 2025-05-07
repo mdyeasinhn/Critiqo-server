@@ -8,8 +8,8 @@ import { PaymentController } from '../controllers/payment.controller';
 const router = express.Router();
 
 router.post("/",
-    //auth(UserRole.GUEST, UserRole.ADMIN),
-    PaymentController.paymentIntent
+    auth(UserRole.GUEST, UserRole.ADMIN),
+    PaymentController.payment
 );
 
 
