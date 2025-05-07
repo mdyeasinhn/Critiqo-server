@@ -36,6 +36,7 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.2",
+    "shurjopay": "^0.12.1",
     "stripe": "^18.1.0",
     "zod": "^3.24.3"
   }

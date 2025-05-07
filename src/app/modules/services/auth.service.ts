@@ -41,7 +41,7 @@ const loginUser = async (payload: {
         role: userData.role
     };
 
-    console.log("Token payload:", tokenPayload);
+
 
     // Generate access token
     const accessToken = jwtHelpars.generateToken(
