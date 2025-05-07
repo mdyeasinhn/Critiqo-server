@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from 'express';
 import { UserRole } from '@prisma/client';
 import auth from '../../../middleware/auth';
 import { AdminReviewController } from '../controllers/adminReview.controller';
-import { adminReviewValidation } from '../validation/adminReview.validation';
 
 const router = express.Router();
 
@@ -24,17 +23,7 @@ router.get(
 // Single unified route for managing review status (publish, unpublish, premium settings)
 router.patch(
     '/reviews/:id',
-    (req: Request, res: Response, next: NextFunction) => {
-        try {
-            if (adminReviewValidation && adminReviewValidation.manageReview) {
-                req.body = adminReviewValidation.manageReview.parse(req.body);
-            }
-            return next();
-        } catch (error) {
-            next(error);
-        }
-    },
-    AdminReviewController.manageReview
+    AdminReviewController.updateReview
 );
 
 export const AdminReviewRoutes = router;
