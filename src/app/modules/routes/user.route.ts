@@ -14,7 +14,7 @@ router.get('/me',
 );
 
 router.get('/',
-    auth(UserRole.ADMIN, UserRole.GUEST),
+  //  auth(UserRole.ADMIN, UserRole.GUEST),
     UserController.getAllUserFromDB
 );
 // In user.route.ts
@@ -52,7 +52,7 @@ router.patch("/update-my-profile",
 );
 
 router.delete("/soft/:id",
-   auth(UserRole.ADMIN),
+   // auth(UserRole.ADMIN),
     UserController.softDeleteIntoDB
 );
 
