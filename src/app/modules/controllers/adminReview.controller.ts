@@ -88,7 +88,7 @@ const updateReview =catchAsync(async(req:Request , res:Response, next:NextFuncti
   sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Updateing My Profile Data!",
+      message: "Updateing review successfully!",
       data: result,
   });
 });

@@ -676,6 +676,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         rating: review.rating,
         status: review.status,
         isPremium: review.isPremium,
+        moderationNote: review.moderationNote,
         category: review.category.name,
         upvotes: review._count.votes,
         comments: review._count.comments,
