@@ -20,42 +20,42 @@ const getAllReviewsForAdmin = async (
     },
     paginationOptions: IPaginationOptions
 ): Promise<IGenericResponse<any>> => {
-    const { 
-        status = 'ALL', 
-        categoryId, 
+    const {
+        status = 'ALL',
+        categoryId,
         userId,
         searchTerm,
         isPremium
     } = filters;
-    
+
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationOptions;
-    
+
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
+
     // Build the where condition
     const whereConditions: any = {};
-    
+
     // Filter by status if not 'ALL'
     if (status !== 'ALL') {
         whereConditions.status = status;
     }
-    
+
     // Filter by category if provided
     if (categoryId) {
         whereConditions.categoryId = categoryId;
     }
-    
+
     // Filter by user if provided
     if (userId) {
         whereConditions.userId = userId;
     }
-    
+
     // Filter by premium status if provided
     if (isPremium !== undefined) {
         whereConditions.isPremium = isPremium;
     }
-    
+
     // Search by title or description
     if (searchTerm) {
         whereConditions.OR = [
@@ -73,7 +73,7 @@ const getAllReviewsForAdmin = async (
             }
         ];
     }
-    
+
     try {
         // Get reviews
         const reviews = await prisma.review.findMany({
@@ -102,12 +102,12 @@ const getAllReviewsForAdmin = async (
             skip,
             take
         });
-        
+
         // Get total count
         const total = await prisma.review.count({
             where: whereConditions
         });
-        
+
         // Format the response
         const formattedReviews = reviews.map(review => ({
             id: review.id,
@@ -132,7 +132,7 @@ const getAllReviewsForAdmin = async (
             createdAt: review.createdAt,
             updatedAt: review.updatedAt
         }));
-        
+
         return {
             meta: {
                 page: Number(page),
@@ -159,7 +159,7 @@ const getReviewStatsByStatus = async () => {
             id: true
         }
     });
-    
+
     // Format the response
     const stats = {
         total: 0,
@@ -168,11 +168,11 @@ const getReviewStatsByStatus = async () => {
         unpublished: 0,
         premium: 0
     };
-    
+
     // Calculate total
     reviewStats.forEach(stat => {
         const count = stat._count.id;
-        
+
         if (stat.status === ReviewStatus.PUBLISHED) {
             stats.published = count;
         } else if (stat.status === ReviewStatus.DRAFT) {
@@ -180,17 +180,17 @@ const getReviewStatsByStatus = async () => {
         } else if (stat.status === ReviewStatus.UNPUBLISHED) {
             stats.unpublished = count;
         }
-        
+
         stats.total += count;
     });
-    
+
     // Get count of premium reviews
     stats.premium = await prisma.review.count({
         where: {
             isPremium: true
         }
     });
-    
+
     return stats;
 };
 
@@ -218,31 +218,31 @@ const updateReviewStatus = async (
                 id: reviewId
             }
         });
-        
+
         if (!review) {
             throw new ApiError(StatusCodes.NOT_FOUND, "Review not found");
         }
-        
+
         // Prepare update data
         const updateData: any = {
             status,
             moderationNote: moderationNote || null
         };
-        
+
         // Add premium settings if provided
         if (premiumSettings !== undefined) {
             // Validate premium price if review is premium
             if (premiumSettings.isPremium && (!premiumSettings.premiumPrice || premiumSettings.premiumPrice <= 0)) {
                 throw new ApiError(
-                    StatusCodes.BAD_REQUEST, 
+                    StatusCodes.BAD_REQUEST,
                     "Premium price is required and must be greater than 0 for premium reviews"
                 );
             }
-            
+
             updateData.isPremium = premiumSettings.isPremium;
             updateData.premiumPrice = premiumSettings.isPremium ? premiumSettings.premiumPrice : null;
         }
-        
+
         // Update the review
         const updatedReview = await prisma.review.update({
             where: {
@@ -261,7 +261,7 @@ const updateReviewStatus = async (
                 }
             }
         });
-        
+
         return {
             id: updatedReview.id,
             title: updatedReview.title,
@@ -276,11 +276,30 @@ const updateReviewStatus = async (
         };
     } catch (error) {
         console.error(`Error updating review status to ${status}:`, error);
-        throw error instanceof ApiError 
-            ? error 
+        throw error instanceof ApiError
+            ? error
             : new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to update review status to ${status}`);
     }
 };
+
+
+const update = async (id: string, reviewData: any) => {
+    await prisma.review.findFirstOrThrow({
+        where: {
+            id
+        }
+    });
+
+    const review = await prisma.review.update({
+        where: {
+            id
+        },
+        data: reviewData
+    });
+
+    return review;
+};
+
 
 /**
  * Publish a review with optional premium settings
@@ -315,5 +334,6 @@ export const AdminReviewService = {
     getReviewStatsByStatus,
     updateReviewStatus,
     publishReview,
-    unpublishReview
+    unpublishReview,
+    update
 };
