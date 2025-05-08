@@ -91,8 +91,7 @@ const getAllReviewsForAdmin = async (
                 _count: {
                     select: {
                         votes: true,
-                        comments: true,
-                        payments: true
+                        comments: true
                     }
                 }
             },
@@ -128,7 +127,6 @@ const getAllReviewsForAdmin = async (
             userRole: review.user.role,
             votes: review._count.votes,
             comments: review._count.comments,
-            payments: review._count.payments,
             createdAt: review.createdAt,
             updatedAt: review.updatedAt
         }));
