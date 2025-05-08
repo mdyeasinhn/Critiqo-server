@@ -1,9 +1,12 @@
 import { PaymentUtils } from '../utils/payment.utils';
 import prisma from '../models';
+import { PaymentStatus } from '@prisma/client';
 
-
-
-const payment = async (user: { email: string; name: string }, payload: { address: string; contact: string; amount: number }, client_ip: string) => {
+const payment = async (
+  user: { email: string; name: string },
+  payload: { name: string;  amount: number },
+  client_ip: string
+) => {
   const session = await prisma.$transaction(async (tx) => {
     const existingUser = await tx.user.findUnique({
       where: { email: user.email },
@@ -18,36 +21,45 @@ const payment = async (user: { email: string; name: string }, payload: { address
       amount: payload.amount,
       order_id: existingUser.id,
       currency: "BDT",
-      customer_name: payload?.name,
-      customer_address: payload.address,
-      customer_city: payload.city,
+      customer_name: payload.name,
+      customer_address: "N/A",
+      customer_city: "N/A", 
       customer_email: user.email,
       customer_phone: "N/A",
       client_ip,
     };
 
-
-    const payment = await PaymentUtils.makePaymentAsync(paymentPayload);
+    const paymentResponse = await PaymentUtils.makePaymentAsync(paymentPayload);
+    console.log("res-->",paymentResponse)
 
     // Step 2: Check payment status
-    if (!payment?.transactionStatus || payment.transactionStatus !== 'Initiated') {
+    if (!paymentResponse?.transactionStatus || paymentResponse.transactionStatus !== 'Initiated') {
       throw new Error("Payment failed or incomplete");
     }
+    // Step 3: Store payment record in DB
+    await prisma.payment.create({
+      data: {
+        amount: payload.amount,
+        status: PaymentStatus.COMPLETEED, // or COMPLETED if confirmed
+        transactionId: paymentResponse.sp_order_id|| null,
+        userId: existingUser.id,
+      },
+    });
 
-    // Step 3: Update subscription field
-    const updatedUser = await prisma.user.update({
+    // Step 4: Update subscription field
+    await prisma.user.update({
       where: { email: user.email },
       data: {
         subscription: true,
       },
     });
 
-    return payment
+    return paymentResponse;
   });
 
   return session;
 };
 
 export const PaymentService = {
-  payment
-}
+  payment,
+};
