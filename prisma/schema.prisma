@@ -137,8 +137,8 @@ model Review {
   comments Comment[]
   votes    Vote[]
 
-  Post     Post?     @relation(fields: [postId], references: [id])
-  postId   String?
+  Post   Post?   @relation(fields: [postId], references: [id])
+  postId String?
 
   @@map("reviews")
 }
@@ -175,13 +175,14 @@ model Vote {
 
 model Payment {
   id            String        @id @default(uuid())
+  email         String
   amount        Float
   status        PaymentStatus
   transactionId String?
   userId        String
   createdAt     DateTime      @default(now())
 
-  user   User   @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 enum PaymentStatus {
