@@ -1,6 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ReviewStatus } from '@prisma/client';
+
 import { AdminReviewService } from '../services/adminReview.service';
 import { IPaginationOptions } from '../../interface/file';
 import catchAsync from '../../shared/catchAsync';
@@ -160,22 +161,8 @@ const manageReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-const updateReview =catchAsync(async(req:Request , res:Response, next:NextFunction)=>{
-
-  const { id } = req.params;
-  const result = await AdminReviewService.update(id, req.body)
-
-  sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: "Updateing review successfully!",
-      data: result,
-  });
-});
-
 export const AdminReviewController = {
   getAllReviews,
   getReviewStats,
-  manageReview,
-  updateReview
+  manageReview
 };
