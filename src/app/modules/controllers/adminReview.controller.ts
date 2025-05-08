@@ -49,26 +49,107 @@ const getReviewStats = catchAsync(async (req: Request, res: Response) => {
 
 const manageReview = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { status, moderationNote, isPremium, premiumPrice } = req.body;
+  const { status, moderationNote, isPremium } = req.body;
 
-  if (!status || !Object.values(ReviewStatus).includes(status)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid status provided');
+  // Check if there's anything to update
+  if (status === undefined && moderationNote === undefined && isPremium === undefined) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'No update parameters provided');
   }
 
   let result;
-  const premiumSettings = isPremium !== undefined ? { isPremium, premiumPrice } : undefined;
+  let premiumSettings;
+  
+  // Set premiumSettings if isPremium is provided
+  if (isPremium !== undefined) {
+    premiumSettings = { isPremium };
+  }
 
-  // Handle based on status
-  result = await AdminReviewService.updateReviewStatus(id, status, premiumSettings, moderationNote);
+  try {
+    // Get current status if no status is provided
+    if (status === undefined) {
+      const prisma = require('../models').default;
+      
+      // Find the review to get its current status
+      const review = await prisma.review.findUnique({
+        where: { id },
+        select: { status: true }
+      });
+      
+      if (!review) {
+        throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
+      }
+      
+      // Update using existing status
+      result = await AdminReviewService.updateReviewStatus(
+        id, 
+        review.status, 
+        premiumSettings, 
+        moderationNote
+      );
+    } else {
+      // Validate provided status
+      if (!Object.values(ReviewStatus).includes(status)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid status provided');
+      }
+      
+      // Update with new status
+      result = await AdminReviewService.updateReviewStatus(
+        id, 
+        status, 
+        premiumSettings, 
+        moderationNote
+      );
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    console.error('Error updating review:', error);
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to update review. Please try again.'
+    );
+  }
 
-  // Create a meaningful response message based on the action taken
-  let message: string;
-  if (status === ReviewStatus.PUBLISHED) {
-    message = isPremium ? 'Review published as premium content successfully' : 'Review published successfully';
-  } else if (status === ReviewStatus.UNPUBLISHED) {
-    message = 'Review unpublished successfully';
-  } else {
-    message = `Review status updated to ${status} successfully`;
+  // Create appropriate response message
+  let message = 'Review updated successfully';
+  
+  // Determine the most specific message based on what was updated
+  if (status !== undefined && isPremium !== undefined && moderationNote !== undefined) {
+    if (status === ReviewStatus.PUBLISHED) {
+      message = isPremium 
+        ? 'Review published as premium with moderation note' 
+        : 'Review published with moderation note';
+    } else if (status === ReviewStatus.UNPUBLISHED) {
+      message = 'Review unpublished with moderation note';
+    } else {
+      message = `Review status updated to ${status} with premium settings and moderation note`;
+    }
+  } else if (status !== undefined && isPremium !== undefined) {
+    if (status === ReviewStatus.PUBLISHED) {
+      message = isPremium ? 'Review published as premium content' : 'Review published';
+    } else {
+      message = `Review status updated to ${status} with premium settings`;
+    }
+  } else if (status !== undefined && moderationNote !== undefined) {
+    message = `Review status updated to ${status} with moderation note`;
+  } else if (isPremium !== undefined && moderationNote !== undefined) {
+    message = isPremium 
+      ? 'Premium status set with moderation note' 
+      : 'Premium status removed with moderation note';
+  } else if (status !== undefined) {
+    if (status === ReviewStatus.PUBLISHED) {
+      message = 'Review published successfully';
+    } else if (status === ReviewStatus.UNPUBLISHED) {
+      message = 'Review unpublished successfully';
+    } else {
+      message = `Review status updated to ${status} successfully`;
+    }
+  } else if (isPremium !== undefined) {
+    message = isPremium ? 'Review set as premium content' : 'Premium status removed';
+  } else if (moderationNote !== undefined) {
+    message = 'Moderation note updated successfully';
   }
 
   sendResponse(res, {
@@ -78,6 +159,7 @@ const manageReview = catchAsync(async (req: Request, res: Response) => {
     data: result
   });
 });
+
 
 export const AdminReviewController = {
   getAllReviews,
