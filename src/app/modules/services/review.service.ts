@@ -1,6 +1,6 @@
 import prisma from "../models";
 import { IFile, IPaginationOptions, IGenericResponse } from "../../interface/file";
-import { ReviewStatus, UserRole,  VoteType } from "@prisma/client";
+import { ReviewStatus, UserRole, VoteType } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
@@ -25,27 +25,27 @@ interface AuthenticatedRequest extends Request {
 const createReview = async (req: AuthenticatedRequest) => {
     const userId = req.user.userId;
     const files = req.files as IFile[];
-    
+
     // Get the review data from the request body
     const { categoryId, title, description, rating, purchaseSource, isPremium, premiumPrice, ...reviewData } = req.body;
-    
+
     // Check if premium price is provided for premium reviews
     if (isPremium && !premiumPrice) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Premium price is required for premium reviews");
     }
-    
+
     // Upload images to Cloudinary if provided
     let imageUrls: string[] = [];
     if (files && files.length > 0) {
         const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
         imageUrls = uploadedImages.map(image => image.secure_url);
     }
-    
+
     // Admin can directly publish, users create draft reviews
-    const initialStatus = req.user.role === UserRole.ADMIN ? 
-        ReviewStatus.PUBLISHED : 
+    const initialStatus = req.user.role === UserRole.ADMIN ?
+        ReviewStatus.PUBLISHED :
         ReviewStatus.DRAFT;
-    
+
     // Create review
     const review = await prisma.review.create({
         data: {
@@ -71,7 +71,7 @@ const createReview = async (req: AuthenticatedRequest) => {
             }
         }
     });
-    
+
     return review;
 };
 
@@ -281,24 +281,24 @@ const getReviewById = async (id: string, userId?: string) => {
             }
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Check if this is a premium review and if user has paid for it
     const hasPaid = review.payments.length > 0;
-    
+
     // If premium review and user hasn't paid, truncate description
     let reviewDescription = review.description;
     if (review.isPremium && !hasPaid && userId !== review.userId) {
         reviewDescription = review.description.substring(0, 100) + '...';
     }
-    
+
     // Count upvotes and downvotes
     const upvotes = review.votes.filter(vote => vote.type === VoteType.UPVOTE).length;
     const downvotes = review.votes.filter(vote => vote.type === VoteType.DOWNVOTE).length;
-    
+
     // Format comments
     const formattedComments = review.comments.map(comment => ({
         id: comment.id,
@@ -318,7 +318,7 @@ const getReviewById = async (id: string, userId?: string) => {
             updatedAt: reply.updatedAt
         }))
     }));
-    
+
     // Check if user has voted on this review
     let userVote = null;
     if (userId) {
@@ -327,7 +327,7 @@ const getReviewById = async (id: string, userId?: string) => {
             userVote = vote.type;
         }
     }
-    
+
     return {
         id: review.id,
         title: review.title,
@@ -365,53 +365,53 @@ const updateReview = async (id: string, userId: string, updateData: any, files?:
             id
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Check if user owns the review or is an admin
     const user = await prisma.user.findUnique({
         where: {
             id: userId
         }
     });
-    
+
     if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
         throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
     }
-    
+
     // Prepare update data
     const { title, description, rating, purchaseSource, categoryId, isPremium, premiumPrice } = updateData;
-    
+
     const updatedData: any = {};
-    
+
     if (title !== undefined) updatedData.title = title;
     if (description !== undefined) updatedData.description = description;
     if (rating !== undefined) updatedData.rating = Number(rating);
     if (purchaseSource !== undefined) updatedData.purchaseSource = purchaseSource;
     if (categoryId !== undefined) updatedData.categoryId = categoryId;
-    
+
     // Admin can update premium status and price
     if (user?.role === UserRole.ADMIN) {
         if (isPremium !== undefined) updatedData.isPremium = Boolean(isPremium);
         if (premiumPrice !== undefined) updatedData.premiumPrice = Number(premiumPrice);
     }
-    
+
     // If admin updates, keep status. If user updates, set back to DRAFT for review
     if (user?.role !== UserRole.ADMIN && review.status === ReviewStatus.PUBLISHED) {
         updatedData.status = ReviewStatus.DRAFT;
     }
-    
+
     // Upload new images if provided
     if (files && files.length > 0) {
         const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
         const newImageUrls = uploadedImages.map(image => image.secure_url);
-        
+
         // Combine with existing images
         updatedData.images = [...review.images, ...newImageUrls];
     }
-    
+
     // Update the review
     const updatedReview = await prisma.review.update({
         where: {
@@ -429,7 +429,7 @@ const updateReview = async (id: string, userId: string, updateData: any, files?:
             }
         }
     });
-    
+
     return updatedReview;
 };
 
@@ -443,43 +443,43 @@ const deleteReview = async (id: string, userId: string) => {
             id
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Check if user owns the review or is an admin
     const user = await prisma.user.findUnique({
         where: {
             id: userId
         }
     });
-    
+
     if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
         throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to delete this review');
     }
-    
+
     // Delete associated comments
     await prisma.comment.deleteMany({
         where: {
             reviewId: id
         }
     });
-    
+
     // Delete associated votes
     await prisma.vote.deleteMany({
         where: {
             reviewId: id
         }
     });
-    
+
     // Delete the review
     await prisma.review.delete({
         where: {
             id
         }
     });
-    
+
     return {
         id,
         message: 'Review deleted successfully'
@@ -517,7 +517,7 @@ const getFeaturedReviews = async (limit: number = 6) => {
             }
         }
     });
-    
+
     // Get most voted reviews
     const mostVoted = await prisma.review.findMany({
         where: {
@@ -547,7 +547,7 @@ const getFeaturedReviews = async (limit: number = 6) => {
             }
         }
     });
-    
+
     // Format reviews
     const formatReview = (review: any) => ({
         id: review.id,
@@ -560,7 +560,7 @@ const getFeaturedReviews = async (limit: number = 6) => {
         image: review.images.length > 0 ? review.images[0] : null,
         createdAt: review.createdAt
     });
-    
+
     return {
         highestRated: highestRated.map(formatReview),
         mostVoted: mostVoted.map(formatReview)
@@ -580,11 +580,11 @@ const getRelatedReviews = async (id: string, limit: number = 4) => {
             categoryId: true
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Get related reviews in the same category
     const relatedReviews = await prisma.review.findMany({
         where: {
@@ -613,7 +613,7 @@ const getRelatedReviews = async (id: string, limit: number = 4) => {
             }
         }
     });
-    
+
     // Format reviews
     return relatedReviews.map(review => ({
         id: review.id,
@@ -635,7 +635,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
     const { page = 1, limit = 10 } = paginationOptions;
     const skip = (page - 1) * limit;
     const take = Number(limit);
-    
+
     // Get user's reviews
     const reviews = await prisma.review.findMany({
         where: {
@@ -660,19 +660,19 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         skip,
         take
     });
-    
+
     // Get total count
     const total = await prisma.review.count({
         where: {
             userId
         }
     });
-    
+
     // Format reviews
     const formattedReviews = reviews.map(review => ({
         id: review.id,
         title: review.title,
-        desciption :review.description,
+        desciption: review.description,
         rating: review.rating,
         status: review.status,
         isPremium: review.isPremium,
@@ -683,7 +683,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         image: review.images.length > 0 ? review.images[0] : null,
         createdAt: review.createdAt
     }));
-    
+
     return {
         meta: {
             page: Number(page),
@@ -704,25 +704,25 @@ const removeImage = async (reviewId: string, userId: string, imageUrl: string) =
             id: reviewId
         }
     });
-    
+
     if (!review) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found');
     }
-    
+
     // Check if user owns the review or is an admin
     const user = await prisma.user.findUnique({
         where: {
             id: userId
         }
     });
-    
+
     if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
         throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to update this review');
     }
-    
+
     // Remove the image from the array
     const updatedImages = review.images.filter(img => img !== imageUrl);
-    
+
     // Update the review
     const updatedReview = await prisma.review.update({
         where: {
@@ -732,7 +732,7 @@ const removeImage = async (reviewId: string, userId: string, imageUrl: string) =
             images: updatedImages
         }
     });
-    
+
     return updatedReview;
 };
 
