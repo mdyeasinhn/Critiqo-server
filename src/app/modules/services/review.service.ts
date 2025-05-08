@@ -303,6 +303,7 @@ const getReviewById = async (id: string, userId?: string) => {
     const formattedComments = review.comments.map(comment => ({
         id: comment.id,
         content: comment.content,
+        reviewId: comment.reviewId,
         author: comment.user.name,
         authorId: comment.user.id,
         createdAt: comment.createdAt,
@@ -675,6 +676,7 @@ const getUserReviews = async (userId: string, paginationOptions: IPaginationOpti
         rating: review.rating,
         status: review.status,
         isPremium: review.isPremium,
+        moderationNote: review.moderationNote,
         category: review.category.name,
         upvotes: review._count.votes,
         comments: review._count.comments,

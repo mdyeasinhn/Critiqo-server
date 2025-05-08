@@ -1,30 +1,65 @@
-import Stripe from 'stripe';
-import config from '../../config';
+import { PaymentUtils } from '../utils/payment.utils';
+import prisma from '../models';
+import { PaymentStatus } from '@prisma/client';
 
-const createPaymentIntent = async (price: number): Promise<string> => {
-    const stripe = new Stripe(config.stripe_secret as string);
-    const priceInCent = price * 100;
-
-    if (!price || priceInCent < 1) {
-        throw new Error("Invalid price");
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(priceInCent),
-        currency: "usd",
-        automatic_payment_methods: {
-            enabled: true,
-        },
+const payment = async (
+  user: { email: string; name: string },
+  payload: { name: string;  amount: number },
+  client_ip: string
+) => {
+  const session = await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({
+      where: { email: user.email },
     });
 
-    if (paymentIntent.client_secret === null) {
-
-        throw new Error("Failed to retrieve client_secret");
+    if (!existingUser) {
+      throw new Error("User not found");
     }
 
-    return paymentIntent.client_secret;
+    // Step 1: Payment integration
+    const paymentPayload = {
+      amount: payload.amount,
+      order_id: existingUser.id,
+      currency: "BDT",
+      customer_name: payload.name,
+      customer_address: "N/A",
+      customer_city: "N/A", 
+      customer_email: user.email,
+      customer_phone: "N/A",
+      client_ip,
+    };
+
+    const paymentResponse = await PaymentUtils.makePaymentAsync(paymentPayload);
+    console.log("res-->",paymentResponse)
+
+    // Step 2: Check payment status
+    if (!paymentResponse?.transactionStatus || paymentResponse.transactionStatus !== 'Initiated') {
+      throw new Error("Payment failed or incomplete");
+    }
+    // Step 3: Store payment record in DB
+    await prisma.payment.create({
+      data: {
+        amount: payload.amount,
+        status: PaymentStatus.COMPLETEED, // or COMPLETED if confirmed
+        transactionId: paymentResponse.sp_order_id|| null,
+        userId: existingUser.id,
+      },
+    });
+
+    // Step 4: Update subscription field
+    await prisma.user.update({
+      where: { email: user.email },
+      data: {
+        subscription: true,
+      },
+    });
+
+    return paymentResponse;
+  });
+
+  return session;
 };
 
 export const PaymentService = {
-    createPaymentIntent
+  payment,
 };

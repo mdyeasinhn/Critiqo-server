@@ -81,10 +81,27 @@ const updateMyProfile =catchAsync(async(req:Request , res:Response, next:NextFun
     });
 });
 
+// Soft delete User data by ID (mark as deleted without removing)
+const softDeleteIntoDB = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+
+
+    const result = await UserService.softDeleteFromDB(id);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "User data deleted!",
+        data: result,
+    });
+
+})
+
 export const UserController ={
     createAdmin,
     createGuest,
     getAllUserFromDB,
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    softDeleteIntoDB
 }
