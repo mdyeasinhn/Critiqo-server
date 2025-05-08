@@ -39,6 +39,7 @@ const payment = async (
     // Step 3: Store payment record in DB
     await prisma.payment.create({
       data: {
+        email : user.email,
         amount: payload.amount,
         status: PaymentStatus.COMPLETEED, // or COMPLETED if confirmed
         transactionId: paymentResponse.sp_order_id|| null,
@@ -60,6 +61,16 @@ const payment = async (
   return session;
 };
 
+const paymentHistory = async (email: string) => {
+  const result = await prisma.payment.findMany({ 
+    where :{
+      email
+    }
+   })
+  return result
+};
+
 export const PaymentService = {
   payment,
+  paymentHistory
 };
