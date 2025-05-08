@@ -22,6 +22,7 @@ CREATE TABLE "users" (
     "role" "UserRole" NOT NULL DEFAULT 'USER',
     "needPasswordChange" BOOLEAN NOT NULL DEFAULT true,
     "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "subscription" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "isDeleteAt" BOOLEAN NOT NULL DEFAULT false,
@@ -130,10 +131,10 @@ CREATE TABLE "Vote" (
 -- CreateTable
 CREATE TABLE "Payment" (
     "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "amount" DOUBLE PRECISION NOT NULL,
     "status" "PaymentStatus" NOT NULL,
     "transactionId" TEXT,
-    "reviewId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -187,9 +188,6 @@ ALTER TABLE "Vote" ADD CONSTRAINT "Vote_reviewId_fkey" FOREIGN KEY ("reviewId") 
 
 -- AddForeignKey
 ALTER TABLE "Vote" ADD CONSTRAINT "Vote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_reviewId_fkey" FOREIGN KEY ("reviewId") REFERENCES "reviews"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
