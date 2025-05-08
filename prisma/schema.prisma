@@ -136,7 +136,7 @@ model Review {
   user     User      @relation(fields: [userId], references: [id])
   comments Comment[]
   votes    Vote[]
-  payments Payment[]
+
   Post     Post?     @relation(fields: [postId], references: [id])
   postId   String?
 
@@ -178,11 +178,9 @@ model Payment {
   amount        Float
   status        PaymentStatus
   transactionId String?
-  reviewId      String
   userId        String
   createdAt     DateTime      @default(now())
 
-  review Review @relation(fields: [reviewId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 }
 
