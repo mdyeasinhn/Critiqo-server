@@ -5,11 +5,10 @@ import { StatusCodes } from "http-status-codes";
 import { PaymentService } from "../services/payment.service";
 
 
-
 //-------------Payment  ------------------
 const payment = catchAsync(async (req: Request, res: Response) => {
-    const user = req?.user;
-    console.log(user)
+    const user  = req?.user;
+    // console.log("user",user)
     const payment = await PaymentService.payment(user, req.body, req.ip!);
     sendResponse(res, {
         success: true,
@@ -20,17 +19,20 @@ const payment = catchAsync(async (req: Request, res: Response) => {
 
 });
 
-
 const paymentHistory = catchAsync(async (req, res) => {
-    const { email } = req.params
-    const result = await PaymentService.paymentHistory(email);
-    sendResponse(res, {
-        success: true,
-        statusCode: StatusCodes.OK,
-        message: 'My payment history is getting successfully',
-        data: result
-    })
+  const user = req.user;
+  console.log("email", user); // should log the string now
+
+  const result = await PaymentService.paymentHistory(user);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'My payment history is getting successfully',
+    data: result
+  });
 });
+
 
 export const PaymentController = {
     payment,
