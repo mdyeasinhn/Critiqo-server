@@ -39,8 +39,20 @@ const paymentHistory = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getTotalEraning = catchAsync(async (req, res) => {
+
+  const result = await PaymentService.getTotalEraning();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Total Eraning get successfully",
+    data: result,
+  });
+});
 
 export const PaymentController = {
   payment,
   paymentHistory,
+  getTotalEraning
 };

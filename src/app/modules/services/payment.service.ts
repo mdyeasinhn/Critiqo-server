@@ -79,7 +79,25 @@ const paymentHistory = async (user: { email: string; name: string }) => {
   return result;
 };
 
+const getTotalEraning = async () => {
+  const result = await prisma.payment.aggregate({
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const total = result._sum.amount ?? 0;
+  return total;
+
+};
+
+
+
+
+
+
 export const PaymentService = {
   payment,
   paymentHistory,
+  getTotalEraning
 };

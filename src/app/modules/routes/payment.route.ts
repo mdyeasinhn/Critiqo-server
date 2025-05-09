@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get("/history", auth(UserRole.GUEST), PaymentController.paymentHistory);
 
+router.get("/total-earning", auth(UserRole.ADMIN), PaymentController.getTotalEraning);
+
 router.post(
   "/",
   auth(UserRole.GUEST, UserRole.ADMIN),
