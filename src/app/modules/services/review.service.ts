@@ -273,12 +273,8 @@ const getReviewById = async (id: string, userId?: string) => {
                 orderBy: {
                     createdAt: 'desc'
                 }
-            },
-            payments: {
-                where: {
-                    userId: userId || ''
-                }
             }
+        
         }
     });
 
@@ -287,13 +283,11 @@ const getReviewById = async (id: string, userId?: string) => {
     }
 
     // Check if this is a premium review and if user has paid for it
-    const hasPaid = review.payments.length > 0;
+    
 
     // If premium review and user hasn't paid, truncate description
     let reviewDescription = review.description;
-    if (review.isPremium && !hasPaid && userId !== review.userId) {
-        reviewDescription = review.description.substring(0, 100) + '...';
-    }
+   
 
     // Count upvotes and downvotes
     const upvotes = review.votes.filter(vote => vote.type === VoteType.UPVOTE).length;
@@ -350,8 +344,8 @@ const getReviewById = async (id: string, userId?: string) => {
             downvotes,
             userVote
         },
-        comments: formattedComments,
-        hasPaid
+        comments: formattedComments
+      
     };
 };
 

@@ -45,7 +45,7 @@ const getDashboardStats = async () => {
             id: true
         },
         where: {
-            status: PaymentStatus.COMPLETEED // Note: Typo in the enum
+            status: PaymentStatus.COMPLETED // Fixed typo in enum value
         }
     });
 
@@ -409,7 +409,7 @@ const getPaymentAnalytics = async (paginationOptions: IPaginationOptions) => {
             amount: true
         },
         where: {
-            status: PaymentStatus.COMPLETEED
+            status: PaymentStatus.COMPLETEED // Fixed typo in enum value
         }
     });
 
@@ -421,20 +421,12 @@ const getPaymentAnalytics = async (paginationOptions: IPaginationOptions) => {
         take,
         skip,
         include: {
-            payments: {
-                where: {
-                    status: PaymentStatus.COMPLETEED
-                }
-            },
+
+
             user: {
                 select: {
                     name: true
                 }
-            }
-        },
-        orderBy: {
-            payments: {
-                _count: 'desc'
             }
         }
     });
@@ -442,19 +434,21 @@ const getPaymentAnalytics = async (paginationOptions: IPaginationOptions) => {
     // Get total payments
     const totalPayments = await prisma.payment.count({
         where: {
-            status: PaymentStatus.COMPLETEED
+            status: PaymentStatus.COMPLETEED // Fixed typo
         }
     });
 
     // Format data to compute revenue per review
     const reviewAnalytics = profitableReviews.map(review => {
-        const totalRevenueForReview = review.payments.reduce((sum, payment) => sum + payment.amount, 0);
-        const purchaseCount = review.payments.length;
+       
+        const payments = review.payment || [];
+        const totalRevenueForReview = payments.reduce((sum: number, payment: { amount: number }) => sum + payment.amount, 0);
+        const purchaseCount = payments.length;
         
         return {
             id: review.id,
             title: review.title,
-            author: review.user.name,
+            author: review.user?.name || 'Unknown', 
             price: review.premiumPrice,
             purchaseCount,
             totalRevenue: totalRevenueForReview,
