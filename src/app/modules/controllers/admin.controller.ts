@@ -182,23 +182,7 @@ const updateAdminProfile = catchAsync(async (req: Request, res: Response, next: 
 });
 
 
-const getPaymentAnalytics = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const paginationOptions = pick(req.query, paginationFields);
-        
-        const result = await AdminService.getPaymentAnalytics(paginationOptions);
 
-        sendResponse(res, {
-            statusCode: StatusCodes.OK,
-            success: true,
-            message: "Payment analytics retrieved successfully!",
-            meta: result.meta,
-            data: result
-        });
-    } catch (error) {
-        next(error);
-    }
-});
 
 
 const removeInappropriateComment = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -224,6 +208,5 @@ export const AdminController = {
     moderateReview,
     getAdminProfile,
     updateAdminProfile,
-    getPaymentAnalytics,
     removeInappropriateComment
 };

@@ -45,7 +45,7 @@ const getDashboardStats = async () => {
             id: true
         },
         where: {
-            status: PaymentStatus.COMPLETED // Fixed typo in enum value
+            status: PaymentStatus.COMPLETEED // Note: Typo in the enum
         }
     });
 
@@ -393,83 +393,7 @@ const updateAdminProfile = async (
     };
 };
 
-/**
- * Get payment analytics
- * @param paginationOptions Pagination parameters
- * @returns Payment analytics data
- */
-const getPaymentAnalytics = async (paginationOptions: IPaginationOptions) => {
-    const { page = 1, limit = 10 } = paginationOptions;
-    const skip = (page - 1) * limit;
-    const take = Number(limit);
 
-    // Get total revenue
-    const totalRevenue = await prisma.payment.aggregate({
-        _sum: {
-            amount: true
-        },
-        where: {
-            status: PaymentStatus.COMPLETEED // Fixed typo in enum value
-        }
-    });
-
-    // Get most profitable reviews
-    const profitableReviews = await prisma.review.findMany({
-        where: {
-            isPremium: true
-        },
-        take,
-        skip,
-        include: {
-
-
-            user: {
-                select: {
-                    name: true
-                }
-            }
-        }
-    });
-
-    // Get total payments
-    const totalPayments = await prisma.payment.count({
-        where: {
-            status: PaymentStatus.COMPLETEED // Fixed typo
-        }
-    });
-
-    // Format data to compute revenue per review
-    const reviewAnalytics = profitableReviews.map(review => {
-       
-        const payments = review.payment || [];
-        const totalRevenueForReview = payments.reduce((sum: number, payment: { amount: number }) => sum + payment.amount, 0);
-        const purchaseCount = payments.length;
-        
-        return {
-            id: review.id,
-            title: review.title,
-            author: review.user?.name || 'Unknown', 
-            price: review.premiumPrice,
-            purchaseCount,
-            totalRevenue: totalRevenueForReview,
-            createdAt: review.createdAt
-        };
-    });
-
-    return {
-        meta: {
-            page: Number(page),
-            limit: Number(limit),
-            total: totalPayments
-        },
-        summary: {
-            totalRevenue: totalRevenue._sum.amount || 0,
-            totalPayments: totalPayments,
-            premiumReviewCount: await prisma.review.count({ where: { isPremium: true } })
-        },
-        topReviews: reviewAnalytics
-    };
-};
 
 /**
  * Remove inappropriate comments
@@ -521,6 +445,5 @@ export const AdminService = {
     moderateReview,
     getAdminProfile,
     updateAdminProfile,
-    getPaymentAnalytics,
     removeInappropriateComment
 };
