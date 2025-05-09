@@ -18,13 +18,6 @@ const addComment = async (
         where: {
             id: reviewId,
             status: ReviewStatus.PUBLISHED
-        },
-        include: {
-            payments: {
-                where: {
-                    userId
-                }
-            }
         }
     });
 
@@ -32,14 +25,7 @@ const addComment = async (
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found or not published');
     }
 
-    // If premium review, verify user has paid or is the author
-    if (review.isPremium && review.userId !== userId && review.payments.length === 0) {
-        throw new ApiError(
-            StatusCodes.FORBIDDEN,
-            'You need to purchase this premium review to comment on it'
-        );
-    }
-
+   
     // If it's a reply, check if parent comment exists
     if (parentId) {
         const parentComment = await prisma.comment.findUnique({

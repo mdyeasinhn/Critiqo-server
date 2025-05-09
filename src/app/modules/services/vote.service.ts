@@ -12,13 +12,6 @@ const addVote = async (reviewId: string, userId: string, voteType: VoteType) => 
         where: {
             id: reviewId,
             status: ReviewStatus.PUBLISHED
-        },
-        include: {
-            payments: {
-                where: {
-                    userId
-                }
-            }
         }
     });
     
@@ -26,13 +19,7 @@ const addVote = async (reviewId: string, userId: string, voteType: VoteType) => 
         throw new ApiError(StatusCodes.NOT_FOUND, 'Review not found or not published');
     }
     
-    // If premium review, verify user has paid or is the author
-    if (review.isPremium && review.userId !== userId && review.payments.length === 0) {
-        throw new ApiError(
-            StatusCodes.FORBIDDEN, 
-            'You need to purchase this premium review to vote on it'
-        );
-    }
+   
     
     // Check if user already voted on this review
     const existingVote = await prisma.vote.findFirst({
