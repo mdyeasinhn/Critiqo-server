@@ -1,11 +1,11 @@
-import { PaymentUtils } from '../utils/payment.utils';
-import prisma from '../models';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentUtils } from "../utils/payment.utils";
+import prisma from "../models";
+import { PaymentStatus } from "@prisma/client";
 
 const payment = async (
   user: { email: string; name: string },
   payload: { name: string; amount: number },
-  client_ip: string
+  client_ip: string,
 ) => {
   const session = await prisma.$transaction(async (tx) => {
     const existingUser = await tx.user.findUnique({
@@ -31,9 +31,13 @@ const payment = async (
 
     const paymentResponse = await PaymentUtils.makePaymentAsync(paymentPayload);
 
-
     // Step 2: Check payment status
-    if (!paymentResponse?.transactionStatus || paymentResponse.transactionStatus !== 'Initiated') {
+    if (
+      //@ts-ignore
+      !paymentResponse?.transactionStatus ||
+      //@ts-ignore
+      paymentResponse.transactionStatus !== "Initiated"
+    ) {
       throw new Error("Payment failed or incomplete");
     }
     // Step 3: Store payment record in DB
@@ -42,6 +46,7 @@ const payment = async (
         email: user.email,
         amount: payload.amount,
         status: PaymentStatus.COMPLETEED, // or COMPLETED if confirmed
+        //@ts-ignore
         transactionId: paymentResponse.sp_order_id || null,
         userId: existingUser.id,
       },
@@ -61,20 +66,20 @@ const payment = async (
   return session;
 };
 
-const paymentHistory = async (user: { email: string; name: string },) => {
-  const email = user.email
+const paymentHistory = async (user: { email: string; name: string }) => {
+  const email = user.email;
   if (!email) {
     throw new Error("Email is required to fetch payment history.");
   }
   const result = await prisma.payment.findMany({
     where: {
-      email
-    }
-  })
-  return result
+      email,
+    },
+  });
+  return result;
 };
 
 export const PaymentService = {
   payment,
-  paymentHistory
+  paymentHistory,
 };
