@@ -5,7 +5,8 @@ import { PaymentController } from '../controllers/payment.controller';
 
 const router = express.Router();
 
-router.get('/history', PaymentController.paymentHistory)
+router.get('/history', auth(UserRole.GUEST), PaymentController.paymentHistory);
+
 
 router.post("/",
     auth(UserRole.GUEST, UserRole.ADMIN),
