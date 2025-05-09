@@ -123,6 +123,7 @@ const getAllUserFromDB = async (params: any, options: IPagenationOptions) => {
             email: true,
             role: true,
             status: true,
+            subscription: true,
             needPasswordChange: true,
             createdAt: true,
             updatedAt: true,
@@ -155,6 +156,7 @@ const getMyProfile = async (user: IAuthUser) => {
             email: true,
             role: true,
             status: true,
+            subscription: true,
         }
     })
     let profileInfo;
