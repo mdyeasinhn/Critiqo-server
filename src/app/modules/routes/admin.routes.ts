@@ -37,10 +37,7 @@ router.patch(
 );
 
 // Get payment analytics
-router.get(
-    '/payments/analytics',
-    AdminController.getPaymentAnalytics
-);
+
 
 // Remove inappropriate comment
 router.delete(
