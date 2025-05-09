@@ -15,7 +15,7 @@ router.get(
 
 router.get(
   "/",
-  //  auth(UserRole.ADMIN, UserRole.GUEST),
+    auth(UserRole.ADMIN, UserRole.GUEST),
   UserController.getAllUserFromDB,
 );
 // In user.route.ts
