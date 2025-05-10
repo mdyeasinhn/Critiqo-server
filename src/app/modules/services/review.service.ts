@@ -12,6 +12,7 @@ interface IAuthUser {
     userId: string;
     role: UserRole;
     email: string;
+    profilePhoto: string;
 }
 
 // Extend the Express Request type
@@ -66,7 +67,8 @@ const createReview = async (req: AuthenticatedRequest) => {
                 select: {
                     name: true,
                     email: true,
-                    role: true
+                    role: true,
+                    profilePhoto :true,
                 }
             }
         }
