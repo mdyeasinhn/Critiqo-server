@@ -12,6 +12,7 @@ interface IAuthUser {
   userId: string;
   role: UserRole;
   email: string;
+  profilePhoto: string;
 }
 
 interface AuthenticatedRequest extends Request {
@@ -57,6 +58,7 @@ const createReview = catchAsync(
     }
 
     try {
+      
       const result = await ReviewService.createReview(
         req as AuthenticatedRequest,
       );
