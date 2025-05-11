@@ -13,10 +13,9 @@ import { pagenationHelpars } from "../../helpers/pagenationHelper";
 
 // Define the authentication interface
 interface IAuthUser {
-    userId: string;
-    role: UserRole;
-    email: string;
-    profilePhoto: string;
+  userId: string;
+  role: UserRole;
+  email: string;
 }
 
 // Extend the Express Request type
@@ -64,32 +63,31 @@ const createReview = async (req: AuthenticatedRequest) => {
       ? ReviewStatus.PUBLISHED
       : ReviewStatus.DRAFT;
 
-    // Create review
-    const review = await prisma.review.create({
-        data: {
-            title,
-            description,
-            rating: Number(rating),
-            purchaseSource,
-            images: imageUrls,
-            isPremium: Boolean(isPremium),
-            premiumPrice: isPremium ? Number(premiumPrice) : null,
-            status: initialStatus,
-            categoryId,
-            userId
+  // Create review
+  const review = await prisma.review.create({
+    data: {
+      title,
+      description,
+      rating: Number(rating),
+      purchaseSource,
+      images: imageUrls,
+      isPremium: Boolean(isPremium),
+      premiumPrice: isPremium ? Number(premiumPrice) : null,
+      status: initialStatus,
+      categoryId,
+      userId,
+    },
+    include: {
+      category: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+          role: true,
         },
-        include: {
-            category: true,
-            user: {
-                select: {
-                    name: true,
-                    email: true,
-                    role: true,
-                    profilePhoto :true,
-                }
-            }
-        }
-    });
+      },
+    },
+  });
 
   return review;
 };
@@ -246,7 +244,7 @@ const getReviewById = async (id: string, userId?: string) => {
           id: true,
           name: true,
           role: true,
-          profilePhoto : true
+          profilePhoto: true
         },
       },
       votes: {
