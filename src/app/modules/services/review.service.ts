@@ -246,6 +246,7 @@ const getReviewById = async (id: string, userId?: string) => {
           id: true,
           name: true,
           role: true,
+          profilePhoto : true
         },
       },
       votes: {
@@ -350,6 +351,7 @@ const getReviewById = async (id: string, userId?: string) => {
     author: review.user.name,
     authorId: review.user.id,
     authorRole: review.user.role,
+    authorImage: review.user.profilePhoto,
     createdAt: review.createdAt,
     updatedAt: review.updatedAt,
     votes: {
