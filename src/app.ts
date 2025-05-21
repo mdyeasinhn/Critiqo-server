@@ -6,7 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import globalErrorHandler from "./middleware/globalErrorHandler";
 
 const app: Application = express();
-app.use(cors({ origin: ["https://critiqo-frontend-project.vercel.app"], credentials: true }));
+app.use(cors({ origin: ["https://critiqo-frontend-project.vercel.app","http://localhost:3000"], credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
