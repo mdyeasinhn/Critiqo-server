@@ -8,7 +8,7 @@ import globalErrorHandler from "./middleware/globalErrorHandler";
 const app: Application = express();
 
 app.use(cors({ origin: ["http://localhost:3000","https://revuloop-two.vercel.app", "https://critiqo-frontend-project.vercel.app"], credentials: true }));
-app.use(express.json());
+
 app.use(cookieParser());
 
 // parser

@@ -38,12 +38,11 @@ router.post(
 );
 router.post(
   "/create-guest",
-  fileUploader.upload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    req.body = userValidation.createGuest.parse(JSON.parse(req.body.data));
-    return UserController.createGuest(req, res, next);
-  },
+  // userValidation.createGuest,
+ UserController.createGuest
 );
+
+
 
 router.patch(
   "/update-my-profile",

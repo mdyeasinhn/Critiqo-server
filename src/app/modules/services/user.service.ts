@@ -37,16 +37,43 @@ const createAdmin = async (req: Request) => {
   return result;
 };
 
-const createGuest = async (req: Request) => {
-  const file = req.file as IFile;
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.guest.profilePhoto = uploadToCloudinary?.secure_url;
-  }
+// const createGuest = async (req: Request) => {
+//   const file = req.file as IFile;
+//   if (file) {
+//     const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+//     req.body.guest.profilePhoto = uploadToCloudinary?.secure_url;
+//   }
+//   const hashPassword: string = await bcrypt.hash(req.body.password, 12);
+
+//   const userData = {
+//     name: req.body.guest.name,
+//     email: req.body.guest.email,
+//     password: hashPassword,
+//     role: UserRole.GUEST,
+//   };
+
+//   const result = await prisma.$transaction(async (transctionClient: any) => {
+//     await transctionClient.user.create({
+//       data: userData,
+//     });
+
+//     const createdAdminData = await transctionClient.guest.create({
+//       data: req.body.guest,
+//     });
+//     return createdAdminData;
+//   });
+//   return result;
+// };
+
+
+const createGuest = async (req : Request) => {
+ // console.log("request-->", data)
+  // Remove the file upload logic and directly use the image URL from the request
   const hashPassword: string = await bcrypt.hash(req.body.password, 12);
 
   const userData = {
     name: req.body.guest.name,
+    profilePhoto: req.body.guest.profilePhoto,
     email: req.body.guest.email,
     password: hashPassword,
     role: UserRole.GUEST,
@@ -57,14 +84,13 @@ const createGuest = async (req: Request) => {
       data: userData,
     });
 
-    const createdAdminData = await transctionClient.guest.create({
-      data: req.body.guest,
+    const createdGuestData = await transctionClient.guest.create({
+      data: req.body.guest, // This will now include profilePhoto as a URL string
     });
-    return createdAdminData;
+    return createdGuestData;
   });
   return result;
-};
-
+}
 const getAllUserFromDB = async (params: any, options: IPagenationOptions) => {
   const { page, limit, skip } = pagenationHelpars.calculatePagenation(options);
   const { searchTerm, ...filterData } = params;
@@ -108,11 +134,11 @@ const getAllUserFromDB = async (params: any, options: IPagenationOptions) => {
     orderBy:
       options.sortBy && options.sortOrder
         ? {
-            [options.sortBy]: options.sortOrder,
-          }
+          [options.sortBy]: options.sortOrder,
+        }
         : {
-            createdAt: "desc",
-          },
+          createdAt: "desc",
+        },
     select: {
       id: true,
       email: true,
