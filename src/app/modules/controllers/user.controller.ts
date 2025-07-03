@@ -30,7 +30,6 @@ const createAdmin = catchAsync(
 const createGuest = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const result = await UserService.createGuest(req);
-
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,

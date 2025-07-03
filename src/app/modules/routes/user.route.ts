@@ -4,6 +4,7 @@ import { fileUploader } from "../../helpers/fileUploader";
 import { userValidation } from "../validation/user.validation";
 import auth from "../../../middleware/auth";
 import { UserRole } from "@prisma/client";
+import validateRequest from "../../../middleware/validateRequest";
 
 const router = express.Router();
 
@@ -15,35 +16,22 @@ router.get(
 
 router.get(
   "/",
-    auth(UserRole.ADMIN, UserRole.GUEST),
+  auth(UserRole.ADMIN, UserRole.GUEST),
   UserController.getAllUserFromDB,
 );
-// In user.route.ts
+
 router.post(
   "/create-admin",
-  //  auth(UserRole.ADMIN),
-  fileUploader.upload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    console.log("File:", req.file);
-    console.log("Body:", req.body);
-
-    try {
-      req.body = userValidation.createAdmin.parse(JSON.parse(req.body.data));
-      return UserController.createAdmin(req, res, next);
-    } catch (error) {
-      console.error("Parsing error:", error);
-      next(error);
-    }
-  },
-);
+  validateRequest(userValidation.createAdmin),
+  UserController.createAdmin
+)
 router.post(
   "/create-guest",
-  fileUploader.upload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    req.body = userValidation.createGuest.parse(JSON.parse(req.body.data));
-    return UserController.createGuest(req, res, next);
-  },
+  validateRequest(userValidation.createGuest),
+  UserController.createGuest
 );
+
+
 
 router.patch(
   "/update-my-profile",
