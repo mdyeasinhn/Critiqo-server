@@ -10,16 +10,12 @@ import { userSearchAbleFields } from "../../constants/user.constant";
 import { IAuthUser } from "../../interface/common";
 
 const createAdmin = async (req: Request) => {
-  const file = req.file as IFile;
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.admin.profilePhoto = uploadToCloudinary?.secure_url;
-  }
   const hashPassword: string = await bcrypt.hash(req.body.password, 12);
 
   const userData = {
     name: req.body.admin.name,
     email: req.body.admin.email,
+    profilePhoto: req.body.admin.profilePhoto, 
     password: hashPassword,
     role: UserRole.ADMIN,
   };
@@ -66,8 +62,8 @@ const createAdmin = async (req: Request) => {
 // };
 
 
-const createGuest = async (req : Request) => {
- // console.log("request-->", data)
+const createGuest = async (req: Request) => {
+  // console.log("request-->", data)
   // Remove the file upload logic and directly use the image URL from the request
   const hashPassword: string = await bcrypt.hash(req.body.password, 12);
 

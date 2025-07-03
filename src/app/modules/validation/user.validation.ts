@@ -14,9 +14,10 @@ const createAdmin = z.object({
     contactNumber: z.string({
       required_error: "Contact Number is required!",
     }),
+    profilePhoto: z.string().url().optional(), 
   }),
 });
-// const createGuest = z.object({
+
 //   password: z.string({
 //     required_error: "Password is required",
 //   }),
@@ -47,7 +48,7 @@ const createGuest = z.object({
     contactNumber: z.string({
       required_error: "Contact Number is required!",
     }),
-    profilePhoto: z.string().url().optional(), // Add this line for the image URL
+    profilePhoto: z.string().url().optional(),
   }),
 });
 export const userValidation = {
