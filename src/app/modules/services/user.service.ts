@@ -202,12 +202,6 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
     },
   });
 
-  const file = req.file as IFile;
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.profilePhoto = uploadToCloudinary?.secure_url;
-  }
-
   let profileInfo;
 
   if (userInfo.role === UserRole.ADMIN) {
