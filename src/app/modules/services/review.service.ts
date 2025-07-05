@@ -28,9 +28,8 @@ interface AuthenticatedRequest extends Request {
  */
 const createReview = async (req: AuthenticatedRequest) => {
   const userId = req.user.userId;
-  const files = req.files as IFile[];
 
-  // Get the review data from the request body
+  // Destructure body
   const {
     categoryId,
     title,
@@ -39,25 +38,18 @@ const createReview = async (req: AuthenticatedRequest) => {
     purchaseSource,
     isPremium,
     premiumPrice,
-    ...reviewData
+    images = [],
   } = req.body;
 
-  // Check if premium price is provided for premium reviews
+  // Validate premium logic
   if (isPremium && !premiumPrice) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      "Premium price is required for premium reviews",
+      "Premium price is required for premium reviews"
     );
   }
 
-  // Upload images to Cloudinary if provided
-  let imageUrls: string[] = [];
-  if (files && files.length > 0) {
-    const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
-    imageUrls = uploadedImages.map((image) => image.secure_url);
-  }
-
-  // Admin can directly publish, users create draft reviews
+  // Determine initial status
   const initialStatus =
     req.user.role === UserRole.ADMIN
       ? ReviewStatus.PUBLISHED
@@ -70,7 +62,7 @@ const createReview = async (req: AuthenticatedRequest) => {
       description,
       rating: Number(rating),
       purchaseSource,
-      images: imageUrls,
+      images,
       isPremium: Boolean(isPremium),
       premiumPrice: isPremium ? Number(premiumPrice) : null,
       status: initialStatus,
@@ -91,6 +83,7 @@ const createReview = async (req: AuthenticatedRequest) => {
 
   return review;
 };
+
 
 /**
  * Get all reviews with pagination and filtering

@@ -211,6 +211,7 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
       },
       data: req.body,
     });
+
   } else if (userInfo.role === UserRole.GUEST) {
     profileInfo = await prisma.guest.update({
       where: {
