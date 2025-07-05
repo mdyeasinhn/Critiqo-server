@@ -37,21 +37,8 @@ router.post(
 router.patch(
   "/:id",
   auth(UserRole.ADMIN, UserRole.GUEST),
-  fileUploader.upload.array("images", 5),
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (req.body.data) {
-        req.body = reviewValidation.updateReview.parse(
-          JSON.parse(req.body.data),
-        );
-      } else {
-        req.body = reviewValidation.updateReview.parse(req.body);
-      }
-      return next();
-    } catch (error) {
-      next(error);
-    }
-  },
+  validateRequest(reviewValidation.updateReview),
+
   ReviewController.updateReview,
 );
 
