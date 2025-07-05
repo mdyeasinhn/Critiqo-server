@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 import { reviewValidation } from "../validation/review.validation";
 import { fileUploader } from "../../helpers/fileUploader";
 import auth from "../../../middleware/auth";
+import validateRequest from "../../../middleware/validateRequest";
 
 const router = express.Router();
 
@@ -28,21 +29,7 @@ router.get("/user/:userId", ReviewController.getUserReviews);
 router.post(
   "/",
   auth(UserRole.ADMIN, UserRole.GUEST),
-  fileUploader.upload.array("images", 5), // Allow up to 5 images
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (req.body.data) {
-        req.body = reviewValidation.createReview.parse(
-          JSON.parse(req.body.data),
-        );
-      } else {
-        req.body = reviewValidation.createReview.parse(req.body);
-      }
-      return next();
-    } catch (error) {
-      next(error);
-    }
-  },
+  validateRequest(reviewValidation.createReview),
   ReviewController.createReview,
 );
 
