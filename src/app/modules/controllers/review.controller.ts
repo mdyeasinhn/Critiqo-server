@@ -222,6 +222,7 @@ const updateReview = catchAsync(
         id,
         userId,
         updateData,
+        // @ts-ignore
         normalizedFiles,
       );
 

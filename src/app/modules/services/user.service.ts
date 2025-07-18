@@ -2,7 +2,6 @@ import { Request } from "express";
 import prisma from "../models";
 import bcrypt from "bcrypt";
 import { IFile } from "../../interface/file";
-import { fileUploader } from "../../helpers/fileUploader";
 import { Prisma, UserRole, UserStatus } from "@prisma/client";
 import { IPagenationOptions } from "../../interface/pagination";
 import { pagenationHelpars } from "../../helpers/pagenationHelper";

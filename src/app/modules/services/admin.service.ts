@@ -12,7 +12,6 @@ import {
   PaymentStatus,
 } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
 
 /**
@@ -329,93 +328,93 @@ const getAdminProfile = async (userId: string) => {
  * @param file Optional profile photo
  * @returns Updated admin profile
  */
-const updateAdminProfile = async (
-  userId: string,
-  updateData: {
-    name?: string;
-    contactNumber?: string;
-  },
-  file?: Express.Multer.File,
-) => {
-  if (!userId) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User ID is required");
-  }
+// const updateAdminProfile = async (
+//   userId: string,
+//   updateData: {
+//     name?: string;
+//     contactNumber?: string;
+//   },
+//   file?: Express.Multer.File,
+// ) => {
+//   if (!userId) {
+//     throw new ApiError(StatusCodes.BAD_REQUEST, "User ID is required");
+//   }
 
-  // Get user with admin role
-  const user = await prisma.user.findFirst({
-    where: {
-      id: userId,
-      role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE,
-    },
-    include: {
-      admin: true,
-    },
-  });
+//   // Get user with admin role
+//   const user = await prisma.user.findFirst({
+//     where: {
+//       id: userId,
+//       role: UserRole.ADMIN,
+//       status: UserStatus.ACTIVE,
+//     },
+//     include: {
+//       admin: true,
+//     },
+//   });
 
-  if (!user || !user.admin) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Admin profile not found");
-  }
+//   if (!user || !user.admin) {
+//     throw new ApiError(StatusCodes.NOT_FOUND, "Admin profile not found");
+//   }
 
-  let profilePhotoUrl: string | undefined;
+//   let profilePhotoUrl: string | undefined;
 
-  // Upload profile photo if provided
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(
-      file as unknown as IFile,
-    );
-    profilePhotoUrl = uploadToCloudinary?.secure_url;
-  }
+//   // Upload profile photo if provided
+//   if (file) {
+//     const uploadToCloudinary = await fileUploader.uploadToCloudinary(
+//       file as unknown as IFile,
+//     );
+//     profilePhotoUrl = uploadToCloudinary?.secure_url;
+//   }
 
-  // Update admin profile
-  const updatedAdmin = await prisma.$transaction(async (transactionClient) => {
-    // Update user name if provided
-    if (updateData.name) {
-      await transactionClient.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          name: updateData.name,
-        },
-      });
-    }
+//   // Update admin profile
+//   const updatedAdmin = await prisma.$transaction(async (transactionClient) => {
+//     // Update user name if provided
+//     if (updateData.name) {
+//       await transactionClient.user.update({
+//         where: {
+//           id: userId,
+//         },
+//         data: {
+//           name: updateData.name,
+//         },
+//       });
+//     }
 
-    // Update admin profile
-    const adminUpdateData: any = {};
+//     // Update admin profile
+//     const adminUpdateData: any = {};
 
-    if (updateData.name) {
-      adminUpdateData.name = updateData.name;
-    }
+//     if (updateData.name) {
+//       adminUpdateData.name = updateData.name;
+//     }
 
-    if (updateData.contactNumber) {
-      adminUpdateData.contactNumber = updateData.contactNumber;
-    }
+//     if (updateData.contactNumber) {
+//       adminUpdateData.contactNumber = updateData.contactNumber;
+//     }
 
-    if (profilePhotoUrl) {
-      adminUpdateData.profilePhoto = profilePhotoUrl;
-    }
+//     if (profilePhotoUrl) {
+//       adminUpdateData.profilePhoto = profilePhotoUrl;
+//     }
 
-    const updatedAdminProfile = await transactionClient.admin.update({
-      where: {
-        email: user.email,
-      },
-      data: adminUpdateData,
-    });
+//     const updatedAdminProfile = await transactionClient.admin.update({
+//       where: {
+//         email: user.email,
+//       },
+//       data: adminUpdateData,
+//     });
 
-    return updatedAdminProfile;
-  });
+//     return updatedAdminProfile;
+//   });
 
-  return {
-    id: user.id,
-    name: updateData.name || user.name,
-    email: user.email,
-    role: user.role,
-    profilePhoto: profilePhotoUrl || user.admin.profilePhoto,
-    contactNumber: updateData.contactNumber || user.admin.contactNumber,
-    createdAt: user.createdAt,
-  };
-};
+//   return {
+//     id: user.id,
+//     name: updateData.name || user.name,
+//     email: user.email,
+//     role: user.role,
+//     profilePhoto: profilePhotoUrl || user.admin.profilePhoto,
+//     contactNumber: updateData.contactNumber || user.admin.contactNumber,
+//     createdAt: user.createdAt,
+//   };
+// };
 
 /**
  * Remove inappropriate comments
@@ -466,6 +465,6 @@ export const AdminService = {
   getPendingReviews,
   moderateReview,
   getAdminProfile,
-  updateAdminProfile,
+
   removeInappropriateComment,
 };

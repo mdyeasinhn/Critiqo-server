@@ -6,7 +6,6 @@ import {
 } from "../../interface/file";
 import { ReviewStatus, UserRole, VoteType } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
 import { Request } from "express";
 import { pagenationHelpars } from "../../helpers/pagenationHelper";

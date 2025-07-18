@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from "express";
 import { ReviewController } from "../controllers/review.controller";
 import { UserRole } from "@prisma/client";
 import { reviewValidation } from "../validation/review.validation";
-import { fileUploader } from "../../helpers/fileUploader";
 import auth from "../../../middleware/auth";
 import validateRequest from "../../../middleware/validateRequest";
 

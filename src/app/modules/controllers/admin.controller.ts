@@ -137,67 +137,67 @@ const getAdminProfile = catchAsync(
   },
 );
 
-const updateAdminProfile = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
+// const updateAdminProfile = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const authReq = req as AuthenticatedRequest;
 
-      const userId = authReq.user?.userId || authReq.user?.id;
+//       const userId = authReq.user?.userId || authReq.user?.id;
 
-      if (!userId) {
-        if (authReq.user?.email) {
-          try {
-            const user = await prisma.user.findUnique({
-              where: { email: authReq.user.email },
-            });
+//       if (!userId) {
+//         if (authReq.user?.email) {
+//           try {
+//             const user = await prisma.user.findUnique({
+//               where: { email: authReq.user.email },
+//             });
 
-            if (user) {
-              const result = await AdminService.updateAdminProfile(
-                user.id,
-                req.body,
-                req.file,
-              );
-              return sendResponse(res, {
-                statusCode: StatusCodes.OK,
-                success: true,
-                message: "Admin profile updated successfully!",
-                data: result,
-              });
-            }
-          } catch (error) {
-            console.error("Error finding user by email:", error);
-            return next(error);
-          }
-        }
+//             if (user) {
+//               const result = await AdminService.updateAdminProfile(
+//                 user.id,
+//                 req.body,
+//                 req.file,
+//               );
+//               return sendResponse(res, {
+//                 statusCode: StatusCodes.OK,
+//                 success: true,
+//                 message: "Admin profile updated successfully!",
+//                 data: result,
+//               });
+//             }
+//           } catch (error) {
+//             console.error("Error finding user by email:", error);
+//             return next(error);
+//           }
+//         }
 
-        return sendResponse(res, {
-          statusCode: StatusCodes.UNAUTHORIZED,
-          success: false,
-          message: "User ID is missing from authentication token",
-          data: null,
-        });
-      }
+//         return sendResponse(res, {
+//           statusCode: StatusCodes.UNAUTHORIZED,
+//           success: false,
+//           message: "User ID is missing from authentication token",
+//           data: null,
+//         });
+//       }
 
-      const updateData = req.body;
-      const file = req.file;
+//       const updateData = req.body;
+//       const file = req.file;
 
-      const result = await AdminService.updateAdminProfile(
-        userId,
-        updateData,
-        file,
-      );
+//       const result = await AdminService.updateAdminProfile(
+//         userId,
+//         updateData,
+//         file,
+//       );
 
-      sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: "Admin profile updated successfully!",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
+//       sendResponse(res, {
+//         statusCode: StatusCodes.OK,
+//         success: true,
+//         message: "Admin profile updated successfully!",
+//         data: result,
+//       });
+//     } catch (error) {
+//       next(error);
+//     }
+//   },
+// );
 
 const removeInappropriateComment = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -223,6 +223,5 @@ export const AdminController = {
   getPendingReviews,
   moderateReview,
   getAdminProfile,
-  updateAdminProfile,
   removeInappropriateComment,
 };
