@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from "express";
 import { ReviewController } from "../controllers/review.controller";
 import { UserRole } from "@prisma/client";
 import { reviewValidation } from "../validation/review.validation";
-import { fileUploader } from "../../helpers/fileUploader";
 import auth from "../../../middleware/auth";
 import validateRequest from "../../../middleware/validateRequest";
 
@@ -37,21 +36,8 @@ router.post(
 router.patch(
   "/:id",
   auth(UserRole.ADMIN, UserRole.GUEST),
-  fileUploader.upload.array("images", 5),
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (req.body.data) {
-        req.body = reviewValidation.updateReview.parse(
-          JSON.parse(req.body.data),
-        );
-      } else {
-        req.body = reviewValidation.updateReview.parse(req.body);
-      }
-      return next();
-    } catch (error) {
-      next(error);
-    }
-  },
+  validateRequest(reviewValidation.updateReview),
+
   ReviewController.updateReview,
 );
 

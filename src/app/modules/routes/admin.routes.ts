@@ -2,8 +2,8 @@ import express, { NextFunction, Request, Response } from "express";
 import { AdminController } from "../controllers/admin.controller";
 import { UserRole } from "@prisma/client";
 import { adminValidation } from "../validation/admin.validation";
-import { fileUploader } from "../../helpers/fileUploader";
 import auth from "../../../middleware/auth";
+import validateRequest from "../../../middleware/validateRequest";
 
 const router = express.Router();
 
@@ -41,18 +41,11 @@ router.delete("/comments/:id", AdminController.removeInappropriateComment);
 router.get("/profile", AdminController.getAdminProfile);
 
 // Update admin profile
-router.patch(
-  "/profile",
-  fileUploader.upload.single("file"),
-  (req: Request, res: Response, next: NextFunction) => {
-    if (req.body.data) {
-      req.body = adminValidation.updateProfile.parse(JSON.parse(req.body.data));
-    } else {
-      req.body = adminValidation.updateProfile.parse(req.body);
-    }
-    return next();
-  },
-  AdminController.updateAdminProfile,
-);
+// router.patch(
+//   "/profile",
+// validateRequest(adminValidation.updateProfile),
+// AdminController.updateAdminProfile
+
+// );
 
 export const AdminRoutes = router;

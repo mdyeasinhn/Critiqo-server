@@ -6,7 +6,6 @@ import {
 } from "../../interface/file";
 import { ReviewStatus, UserRole, VoteType } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-import { fileUploader } from "../../helpers/fileUploader";
 import ApiError from "../../error/ApiError";
 import { Request } from "express";
 import { pagenationHelpars } from "../../helpers/pagenationHelper";
@@ -357,17 +356,15 @@ const getReviewById = async (id: string, userId?: string) => {
 /**
  * Update a review
  */
+
 const updateReview = async (
   id: string,
   userId: string,
-  updateData: any,
-  files?: IFile[],
+  updateData: any
 ) => {
   // Find the review
   const review = await prisma.review.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
   });
 
   if (!review) {
@@ -376,15 +373,13 @@ const updateReview = async (
 
   // Check if user owns the review or is an admin
   const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
+    where: { id: userId },
   });
 
   if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
     throw new ApiError(
       StatusCodes.FORBIDDEN,
-      "You are not authorized to update this review",
+      "You are not authorized to update this review"
     );
   }
 
@@ -397,6 +392,7 @@ const updateReview = async (
     categoryId,
     isPremium,
     premiumPrice,
+    images, // array of image URLs
   } = updateData;
 
   const updatedData: any = {};
@@ -414,7 +410,7 @@ const updateReview = async (
       updatedData.premiumPrice = Number(premiumPrice);
   }
 
-  // If admin updates, keep status. If user updates, set back to DRAFT for review
+  // If user edits a published review, set it back to draft
   if (
     user?.role !== UserRole.ADMIN &&
     review.status === ReviewStatus.PUBLISHED
@@ -422,20 +418,18 @@ const updateReview = async (
     updatedData.status = ReviewStatus.DRAFT;
   }
 
-  // Upload new images if provided
-  if (files && files.length > 0) {
-    const uploadedImages = await fileUploader.uploadMultipleToCloudinary(files);
-    const newImageUrls = uploadedImages.map((image) => image.secure_url);
+  // Handle image updates (replace or merge)
+  if (images !== undefined && Array.isArray(images)) {
+    // Option 1: Replace existing images
+    updatedData.images = images;
 
-    // Combine with existing images
-    updatedData.images = [...review.images, ...newImageUrls];
+    // Option 2: Merge with existing images
+    // updatedData.images = [...review.images, ...images];
   }
 
   // Update the review
   const updatedReview = await prisma.review.update({
-    where: {
-      id,
-    },
+    where: { id },
     data: updatedData,
     include: {
       category: true,
@@ -451,6 +445,7 @@ const updateReview = async (
 
   return updatedReview;
 };
+
 
 /**
  * Delete a review

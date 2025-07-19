@@ -1,6 +1,5 @@
 import express, { NextFunction, Request, Response } from "express";
 import { UserController } from "../controllers/user.controller";
-import { fileUploader } from "../../helpers/fileUploader";
 import { userValidation } from "../validation/user.validation";
 import auth from "../../../middleware/auth";
 import { UserRole } from "@prisma/client";
