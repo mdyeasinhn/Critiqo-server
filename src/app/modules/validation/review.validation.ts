@@ -20,6 +20,7 @@ const createReview = z.object({
   purchaseSource: z.string().optional(),
   isPremium: z.boolean().optional().default(false),
   premiumPrice: z.number().optional(),
+  images: z.string()
 });
 
 // Validation schema for updating a review

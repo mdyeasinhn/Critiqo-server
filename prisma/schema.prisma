@@ -122,7 +122,7 @@ model Review {
   description    String
   rating         Int
   purchaseSource String?
-  images         String[] // Cloudinary URLs
+  images         String // Cloudinary URLs
   isPremium      Boolean      @default(false)
   premiumPrice   Float?
   status         ReviewStatus @default(DRAFT)
