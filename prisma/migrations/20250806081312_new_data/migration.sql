@@ -90,7 +90,7 @@ CREATE TABLE "reviews" (
     "description" TEXT NOT NULL,
     "rating" INTEGER NOT NULL,
     "purchaseSource" TEXT,
-    "images" TEXT[],
+    "images" TEXT NOT NULL,
     "isPremium" BOOLEAN NOT NULL DEFAULT false,
     "premiumPrice" DOUBLE PRECISION,
     "status" "ReviewStatus" NOT NULL DEFAULT 'DRAFT',

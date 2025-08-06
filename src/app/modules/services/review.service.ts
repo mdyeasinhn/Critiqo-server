@@ -37,8 +37,9 @@ const createReview = async (req: AuthenticatedRequest) => {
     purchaseSource,
     isPremium,
     premiumPrice,
-    images = [],
+    images,
   } = req.body;
+
 
   // Validate premium logic
   if (isPremium && !premiumPrice) {
@@ -357,6 +358,96 @@ const getReviewById = async (id: string, userId?: string) => {
  * Update a review
  */
 
+// const updateReview = async (
+//   id: string,
+//   userId: string,
+//   updateData: any
+// ) => {
+//   // Find the review
+//   const review = await prisma.review.findUnique({
+//     where: { id },
+//   });
+
+//   if (!review) {
+//     throw new ApiError(StatusCodes.NOT_FOUND, "Review not found");
+//   }
+
+//   // Check if user owns the review or is an admin
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId },
+//   });
+
+//   if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
+//     throw new ApiError(
+//       StatusCodes.FORBIDDEN,
+//       "You are not authorized to update this review"
+//     );
+//   }
+
+//   // Prepare update data
+//   const {
+//     title,
+//     description,
+//     rating,
+//     purchaseSource,
+//     categoryId,
+//     isPremium,
+//     premiumPrice,
+//     images, // array of image URLs
+//   } = updateData;
+
+//   const updatedData: any = {};
+
+//   if (title !== undefined) updatedData.title = title;
+//   if (description !== undefined) updatedData.description = description;
+//   if (rating !== undefined) updatedData.rating = Number(rating);
+//   if (purchaseSource !== undefined) updatedData.purchaseSource = purchaseSource;
+//   if (categoryId !== undefined) updatedData.categoryId = categoryId;
+
+//   // Admin can update premium status and price
+//   if (user?.role === UserRole.ADMIN) {
+//     if (isPremium !== undefined) updatedData.isPremium = Boolean(isPremium);
+//     if (premiumPrice !== undefined)
+//       updatedData.premiumPrice = Number(premiumPrice);
+//   }
+
+//   // If user edits a published review, set it back to draft
+//   if (
+//     user?.role !== UserRole.ADMIN &&
+//     review.status === ReviewStatus.PUBLISHED
+//   ) {
+//     updatedData.status = ReviewStatus.DRAFT;
+//   }
+
+//   // Handle image updates (replace or merge)
+//   if (images !== undefined && Array.isArray(images)) {
+//     // Option 1: Replace existing images
+//     updatedData.images = images;
+
+//     // Option 2: Merge with existing images
+//     // updatedData.images = [...review.images, ...images];
+//   }
+
+//   // Update the review
+//   const updatedReview = await prisma.review.update({
+//     where: { id },
+//     data: updatedData,
+//     include: {
+//       category: true,
+//       user: {
+//         select: {
+//           name: true,
+//           email: true,
+//           role: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return updatedReview;
+// };
+
+
 const updateReview = async (
   id: string,
   userId: string,
@@ -383,7 +474,7 @@ const updateReview = async (
     );
   }
 
-  // Prepare update data
+  
   const {
     title,
     description,
@@ -392,7 +483,7 @@ const updateReview = async (
     categoryId,
     isPremium,
     premiumPrice,
-    images, // array of image URLs
+    images, 
   } = updateData;
 
   const updatedData: any = {};
@@ -418,13 +509,9 @@ const updateReview = async (
     updatedData.status = ReviewStatus.DRAFT;
   }
 
-  // Handle image updates (replace or merge)
-  if (images !== undefined && Array.isArray(images)) {
-    // Option 1: Replace existing images
+  // Handle image update as string
+  if (typeof images === "string") {
     updatedData.images = images;
-
-    // Option 2: Merge with existing images
-    // updatedData.images = [...review.images, ...images];
   }
 
   // Update the review
@@ -574,7 +661,8 @@ const getFeaturedReviews = async (limit: number = 6) => {
     category: review.category.name,
     author: review.user.name,
     upvotes: review._count.votes,
-    image: review.images.length > 0 ? review.images[0] : null,
+    // image: review.images.length > 0 ? review.images[0] : null,
+    image: review.images,
     createdAt: review.createdAt,
   });
 
@@ -700,7 +788,8 @@ const getUserReviews = async (
     category: review.category.name,
     upvotes: review._count.votes,
     comments: review._count.comments,
-    image: review.images.length > 0 ? review.images[0] : null,
+    // image: review.images.length > 0 ? review.images[0] : null,
+    image: review.images,
     createdAt: review.createdAt,
   }));
 
