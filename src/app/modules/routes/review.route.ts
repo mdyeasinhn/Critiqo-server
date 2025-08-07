@@ -49,18 +49,18 @@ router.delete(
 );
 
 // Remove image from review
-router.post(
-  "/:id/remove-image",
-  auth(UserRole.ADMIN, UserRole.GUEST),
-  (req: Request, res: Response, next: NextFunction) => {
-    try {
-      req.body = reviewValidation.removeImage.parse(req.body);
-      return next();
-    } catch (error) {
-      next(error);
-    }
-  },
-  ReviewController.removeImage,
-);
+// router.post(
+//   "/:id/remove-image",
+//   auth(UserRole.ADMIN, UserRole.GUEST),
+//   (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       req.body = reviewValidation.removeImage.parse(req.body);
+//       return next();
+//     } catch (error) {
+//       next(error);
+//     }
+//   },
+//   ReviewController.removeImage,
+// );
 
 export const ReviewRoutes = router;

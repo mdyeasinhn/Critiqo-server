@@ -806,51 +806,51 @@ const getUserReviews = async (
 /**
  * Remove image from review
  */
-const removeImage = async (
-  reviewId: string,
-  userId: string,
-  imageUrl: string,
-) => {
-  // Find the review
-  const review = await prisma.review.findUnique({
-    where: {
-      id: reviewId,
-    },
-  });
+// const removeImage = async (
+//   reviewId: string,
+//   userId: string,
+//   imageUrl: string,
+// ) => {
+//   // Find the review
+//   const review = await prisma.review.findUnique({
+//     where: {
+//       id: reviewId,
+//     },
+//   });
 
-  if (!review) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Review not found");
-  }
+//   if (!review) {
+//     throw new ApiError(StatusCodes.NOT_FOUND, "Review not found");
+//   }
 
-  // Check if user owns the review or is an admin
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+//   // Check if user owns the review or is an admin
+//   const user = await prisma.user.findUnique({
+//     where: {
+//       id: userId,
+//     },
+//   });
 
-  if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
-    throw new ApiError(
-      StatusCodes.FORBIDDEN,
-      "You are not authorized to update this review",
-    );
-  }
+//   if (review.userId !== userId && user?.role !== UserRole.ADMIN) {
+//     throw new ApiError(
+//       StatusCodes.FORBIDDEN,
+//       "You are not authorized to update this review",
+//     );
+//   }
 
-  // Remove the image from the array
-  const updatedImages = review.images.filter((img) => img !== imageUrl);
+//   // Remove the image from the array
+//   const updatedImages = review.images.filter((img) => img !== imageUrl);
 
-  // Update the review
-  const updatedReview = await prisma.review.update({
-    where: {
-      id: reviewId,
-    },
-    data: {
-      images: updatedImages,
-    },
-  });
+//   // Update the review
+//   const updatedReview = await prisma.review.update({
+//     where: {
+//       id: reviewId,
+//     },
+//     data: {
+//       images: updatedImages,
+//     },
+//   });
 
-  return updatedReview;
-};
+//   return updatedReview;
+// };
 
 export const ReviewService = {
   createReview,
@@ -861,5 +861,5 @@ export const ReviewService = {
   getFeaturedReviews,
   getRelatedReviews,
   getUserReviews,
-  removeImage,
+  // removeImage,
 };

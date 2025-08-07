@@ -470,84 +470,84 @@ const getUserReviews = catchAsync(
   },
 );
 
-const removeImage = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
+// const removeImage = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const { id } = req.params;
 
-      if (!id) {
-        return next(
-          new ApiError(StatusCodes.BAD_REQUEST, "Review ID is required"),
-        );
-      }
+//       if (!id) {
+//         return next(
+//           new ApiError(StatusCodes.BAD_REQUEST, "Review ID is required"),
+//         );
+//       }
 
-      // Check if user data exists and is valid
-      if (!req.user) {
-        return next(
-          new ApiError(StatusCodes.UNAUTHORIZED, "Authentication required"),
-        );
-      }
+//       // Check if user data exists and is valid
+//       if (!req.user) {
+//         return next(
+//           new ApiError(StatusCodes.UNAUTHORIZED, "Authentication required"),
+//         );
+//       }
 
-      if (typeof req.user !== "object" || !("userId" in req.user)) {
-        return next(
-          new ApiError(StatusCodes.UNAUTHORIZED, "Invalid user credentials"),
-        );
-      }
+//       if (typeof req.user !== "object" || !("userId" in req.user)) {
+//         return next(
+//           new ApiError(StatusCodes.UNAUTHORIZED, "Invalid user credentials"),
+//         );
+//       }
 
-      const userId = req.user.userId as string;
-      const { imageUrl } = req.body;
+//       const userId = req.user.userId as string;
+//       const { imageUrl } = req.body;
 
-      if (!imageUrl) {
-        return next(
-          new ApiError(StatusCodes.BAD_REQUEST, "Image URL is required"),
-        );
-      }
+//       if (!imageUrl) {
+//         return next(
+//           new ApiError(StatusCodes.BAD_REQUEST, "Image URL is required"),
+//         );
+//       }
 
-      const result = await ReviewService.removeImage(id, userId, imageUrl);
+//       const result = await ReviewService.removeImage(id, userId, imageUrl);
 
-      if (!result) {
-        return next(
-          new ApiError(
-            StatusCodes.NOT_FOUND,
-            "Review not found or image could not be removed",
-          ),
-        );
-      }
+//       if (!result) {
+//         return next(
+//           new ApiError(
+//             StatusCodes.NOT_FOUND,
+//             "Review not found or image could not be removed",
+//           ),
+//         );
+//       }
 
-      sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: "Image removed successfully!",
-        data: result,
-      });
-    } catch (error: any) {
-      if (error.name === "PrismaClientKnownRequestError") {
-        if (error.code === "P2025") {
-          return next(new ApiError(StatusCodes.NOT_FOUND, "Review not found"));
-        }
-        if (error.code === "P2023") {
-          return next(
-            new ApiError(StatusCodes.BAD_REQUEST, "Invalid review ID format"),
-          );
-        }
-      }
+//       sendResponse(res, {
+//         statusCode: StatusCodes.OK,
+//         success: true,
+//         message: "Image removed successfully!",
+//         data: result,
+//       });
+//     } catch (error: any) {
+//       if (error.name === "PrismaClientKnownRequestError") {
+//         if (error.code === "P2025") {
+//           return next(new ApiError(StatusCodes.NOT_FOUND, "Review not found"));
+//         }
+//         if (error.code === "P2023") {
+//           return next(
+//             new ApiError(StatusCodes.BAD_REQUEST, "Invalid review ID format"),
+//           );
+//         }
+//       }
 
-      if (
-        error.message.includes("Unauthorized") ||
-        error.message.includes("Permission denied")
-      ) {
-        return next(
-          new ApiError(
-            StatusCodes.FORBIDDEN,
-            "You are not authorized to remove images from this review",
-          ),
-        );
-      }
+//       if (
+//         error.message.includes("Unauthorized") ||
+//         error.message.includes("Permission denied")
+//       ) {
+//         return next(
+//           new ApiError(
+//             StatusCodes.FORBIDDEN,
+//             "You are not authorized to remove images from this review",
+//           ),
+//         );
+//       }
 
-      next(error);
-    }
-  },
-);
+//       next(error);
+//     }
+//   },
+// );
 
 export const ReviewController = {
   createReview,
@@ -558,5 +558,5 @@ export const ReviewController = {
   getFeaturedReviews,
   getRelatedReviews,
   getUserReviews,
-  removeImage,
+  // removeImage,
 };
