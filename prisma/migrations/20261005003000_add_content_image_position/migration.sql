@@ -1,0 +1,2 @@
+ALTER TABLE "content_images"
+ADD COLUMN "position" INTEGER NOT NULL DEFAULT 0;

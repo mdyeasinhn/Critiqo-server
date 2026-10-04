@@ -7,6 +7,11 @@ import globalErrorHandler from "./middleware/globalErrorHandler";
 import seoRoutes from "./app/modules/routes/seo.routes";
 import publicSeoRoutes from "./app/modules/routes/publicSeo.routes";
 import siteSettingsRoutes from "./app/modules/routes/siteSettings.routes";
+import {
+  AdminContentRoutes,
+  PublicContentRoutes,
+} from "./app/modules/routes/content.routes";
+import { ImageRoutes } from "./app/modules/routes/image.routes";
 
 const app: Application = express();
 
@@ -36,6 +41,9 @@ app.get("/", (req: Request, res: Response) => {
 // Application routes
 app.use("/api/admin/seo", seoRoutes);
 app.use("/api/admin/site-settings", siteSettingsRoutes);
+app.use("/api/admin/content", AdminContentRoutes);
+app.use("/api/admin/images", ImageRoutes);
+app.use("/api/content", PublicContentRoutes);
 app.use("/api/seo", publicSeoRoutes);
 app.use("/api/v1", router);
 

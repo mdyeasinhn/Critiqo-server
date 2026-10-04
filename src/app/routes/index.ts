@@ -12,6 +12,11 @@ import { AdminReviewRoutes } from "../modules/routes/adminReview.routes";
 import SeoRoutes from "../modules/routes/seo.routes";
 import PublicSeoRoutes from "../modules/routes/publicSeo.routes";
 import SiteSettingsRoutes from "../modules/routes/siteSettings.routes";
+import {
+  AdminContentRoutes,
+  PublicContentRoutes,
+} from "../modules/routes/content.routes";
+import { ImageRoutes } from "../modules/routes/image.routes";
 
 const router = express.Router();
 
@@ -39,6 +44,18 @@ const moduleRoutes = [
   {
     path: "/admin/site-settings",
     route: SiteSettingsRoutes,
+  },
+  {
+    path: "/admin/content",
+    route: AdminContentRoutes,
+  },
+  {
+    path: "/admin/images",
+    route: ImageRoutes,
+  },
+  {
+    path: "/content",
+    route: PublicContentRoutes,
   },
   {
     path: "/seo",

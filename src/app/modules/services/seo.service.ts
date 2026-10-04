@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiError";
 import prisma from "../models";
 import { analyzeSeoMetadata } from "../../../lib/seo-analysis/analyzeSeoMetadata";
+import { sanitizeAndExtractImages } from "../../../lib/seo-analysis/sanitizeContentHtml";
 import { SeoContentType, SeoUpdateInput } from "../validation/seo.validation";
 
 type ContentRow = {
@@ -88,7 +89,15 @@ const contentInclude = {
   seoMeta: true,
   schemaMarkups: { select: { id: true, type: true, json: true } },
   contentImages: {
-    select: { id: true, url: true, alt: true, title: true, fileName: true },
+    select: {
+      id: true,
+      url: true,
+      alt: true,
+      title: true,
+      fileName: true,
+      position: true,
+    },
+    orderBy: { position: "asc" },
   },
 } satisfies Prisma.PageInclude;
 
@@ -304,19 +313,31 @@ const replaceContentImages = async (
     case "page":
       await tx.contentImage.deleteMany({ where: { pageId: id } });
       await tx.contentImage.createMany({
-        data: images.map((image) => ({ ...image, pageId: id })),
+        data: images.map((image, position) => ({
+          ...image,
+          position,
+          pageId: id,
+        })),
       });
       break;
     case "blogPost":
       await tx.contentImage.deleteMany({ where: { blogPostId: id } });
       await tx.contentImage.createMany({
-        data: images.map((image) => ({ ...image, blogPostId: id })),
+        data: images.map((image, position) => ({
+          ...image,
+          position,
+          blogPostId: id,
+        })),
       });
       break;
     case "review":
       await tx.contentImage.deleteMany({ where: { reviewId: id } });
       await tx.contentImage.createMany({
-        data: images.map((image) => ({ ...image, reviewId: id })),
+        data: images.map((image, position) => ({
+          ...image,
+          position,
+          reviewId: id,
+        })),
       });
       break;
   }
@@ -332,10 +353,14 @@ export const updateSeoContent = async (
     await ensureUniqueSlug(type, id, input.slug);
   }
 
+  const sanitizedContent =
+    input.contentHtml === undefined
+      ? null
+      : sanitizeAndExtractImages(input.contentHtml);
   const contentUpdate = {
     title: input.title,
     slug: input.slug,
-    contentHtml: input.contentHtml,
+    contentHtml: sanitizedContent?.html,
     published: input.published,
   };
 
@@ -349,7 +374,17 @@ export const updateSeoContent = async (
           await tx.blogPost.update({ where: { id }, data: contentUpdate });
           break;
         case "review":
-          await tx.review.update({ where: { id }, data: contentUpdate });
+          await tx.review.update({
+            where: { id },
+            data: {
+              ...contentUpdate,
+              ...(input.published === undefined
+                ? {}
+                : {
+                    status: input.published ? "PUBLISHED" : "UNPUBLISHED",
+                  }),
+            },
+          });
           break;
       }
 
@@ -358,7 +393,43 @@ export const updateSeoContent = async (
       if (input.schemaMarkup !== undefined) {
         await replaceSchemaMarkups(tx, type, id, input.schemaMarkup);
       }
-      if (input.contentImages !== undefined) {
+      if (sanitizedContent) {
+        switch (type) {
+          case "page":
+            await tx.contentImage.deleteMany({ where: { pageId: id } });
+            if (sanitizedContent.images.length > 0) {
+              await tx.contentImage.createMany({
+                data: sanitizedContent.images.map((image) => ({
+                  ...image,
+                  pageId: id,
+                })),
+              });
+            }
+            break;
+          case "blogPost":
+            await tx.contentImage.deleteMany({ where: { blogPostId: id } });
+            if (sanitizedContent.images.length > 0) {
+              await tx.contentImage.createMany({
+                data: sanitizedContent.images.map((image) => ({
+                  ...image,
+                  blogPostId: id,
+                })),
+              });
+            }
+            break;
+          case "review":
+            await tx.contentImage.deleteMany({ where: { reviewId: id } });
+            if (sanitizedContent.images.length > 0) {
+              await tx.contentImage.createMany({
+                data: sanitizedContent.images.map((image) => ({
+                  ...image,
+                  reviewId: id,
+                })),
+              });
+            }
+            break;
+        }
+      } else if (input.contentImages !== undefined) {
         await replaceContentImages(tx, type, id, input.contentImages);
       }
     });
