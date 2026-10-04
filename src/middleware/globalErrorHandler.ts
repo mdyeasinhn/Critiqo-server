@@ -3,18 +3,17 @@ import { StatusCodes } from "http-status-codes";
 import { TErrorSources } from "../app/interface/error";
 import { ZodError } from "zod";
 import handleZodError from "../app/error/handleZodError";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import handlePrismaError from "../app/error/handlePrismaError";
+import ApiError from "../app/error/ApiError";
+import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
 const globalErrorHandler = (
-  err: any,
-  req: Request,
+  err: unknown,
+  _req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) => {
   let statusCode = 500;
   let message = "Something went wrong!";
-
   let errorSources: TErrorSources = [
     {
       path: "",
@@ -24,16 +23,30 @@ const globalErrorHandler = (
 
   if (err instanceof ZodError) {
     const simplifiedError = handleZodError(err);
-    statusCode = simplifiedError?.statusCode;
-    message = simplifiedError?.message;
-    errorSources = simplifiedError?.errorSources;
+    statusCode = simplifiedError.statusCode;
+    message = simplifiedError.message;
+    errorSources = simplifiedError.errorSources;
+  } else if (err instanceof ApiError) {
+    statusCode = err.statusCode;
+    message = err.message;
+    errorSources = [{ path: "", message }];
+  } else if (
+    err instanceof JsonWebTokenError ||
+    err instanceof TokenExpiredError
+  ) {
+    statusCode = StatusCodes.UNAUTHORIZED;
+    message = "Invalid or expired authentication token";
+    errorSources = [{ path: "", message }];
+  } else if (err instanceof Error) {
+    message = err.message;
+    errorSources = [{ path: "", message }];
   }
 
-  console.log(err);
-  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+  console.error(err);
+  res.status(statusCode).json({
     success: false,
-    message: err.message || "Something went wrong!",
-    error: err,
+    message,
+    error: errorSources,
   });
 };
 

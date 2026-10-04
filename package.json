@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsx --test src/tests/seo-analysis.test.ts",
+    "seed": "tsx prisma/seed.ts",
     "lint": "npx eslint src --ignore-pattern .ts",
     "lint:fix": "npx eslint src --fix",
     "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
     "prettier:fix": "npx prettier --write src",
-    "postinstall" : "prisma generate"
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -40,7 +41,7 @@
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
     "http-status-codes": "^2.3.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.2",
     "shurjopay": "^0.12.1",
     "stripe": "^18.1.0",

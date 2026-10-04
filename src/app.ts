@@ -4,10 +4,22 @@ import router from "./app/routes";
 import cookieParser from "cookie-parser";
 import { StatusCodes } from "http-status-codes";
 import globalErrorHandler from "./middleware/globalErrorHandler";
+import seoRoutes from "./app/modules/routes/seo.routes";
+import publicSeoRoutes from "./app/modules/routes/publicSeo.routes";
+import siteSettingsRoutes from "./app/modules/routes/siteSettings.routes";
 
 const app: Application = express();
 
-app.use(cors({ origin: ["http://localhost:3000","https://revuloop-two.vercel.app", "https://critiqo-frontend-project.vercel.app"], credentials: true }));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://revuloop-two.vercel.app",
+      "https://critiqo-frontend-project.vercel.app",
+    ],
+    credentials: true,
+  }),
+);
 
 app.use(cookieParser());
 
@@ -22,6 +34,9 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // Application routes
+app.use("/api/admin/seo", seoRoutes);
+app.use("/api/admin/site-settings", siteSettingsRoutes);
+app.use("/api/seo", publicSeoRoutes);
 app.use("/api/v1", router);
 
 app.use((req: Request, res: Response, next: NextFunction) => {

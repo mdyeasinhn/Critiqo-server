@@ -9,6 +9,9 @@ import { VoteRoutes } from "../modules/routes/vote.routes";
 import { CommentRoutes } from "../modules/routes/comment.routes";
 import { GuestRoutes } from "../modules/routes/guest.route";
 import { AdminReviewRoutes } from "../modules/routes/adminReview.routes";
+import SeoRoutes from "../modules/routes/seo.routes";
+import PublicSeoRoutes from "../modules/routes/publicSeo.routes";
+import SiteSettingsRoutes from "../modules/routes/siteSettings.routes";
 
 const router = express.Router();
 
@@ -28,6 +31,18 @@ const moduleRoutes = [
   {
     path: "/admin",
     route: AdminReviewRoutes,
+  },
+  {
+    path: "/admin/seo",
+    route: SeoRoutes,
+  },
+  {
+    path: "/admin/site-settings",
+    route: SiteSettingsRoutes,
+  },
+  {
+    path: "/seo",
+    route: PublicSeoRoutes,
   },
   {
     path: "/guest",
