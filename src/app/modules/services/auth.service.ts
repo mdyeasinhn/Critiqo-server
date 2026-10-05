@@ -3,7 +3,6 @@ import prisma from "../models";
 import bcrypt from "bcrypt";
 import { jwtHelpars } from "../../helpers/jwtHelpers";
 import config from "../../config";
-import { Secret } from "jsonwebtoken";
 import ApiError from "../../error/ApiError";
 import { StatusCodes } from "http-status-codes";
 
@@ -44,15 +43,15 @@ const loginUser = async (payload: { email: string; password: string }) => {
   // Generate access token
   const accessToken = jwtHelpars.generateToken(
     tokenPayload,
-    config.jwt.secret as Secret,
-    config.jwt.expires_in as string,
+    config.jwt.secret,
+    config.jwt.expires_in,
   );
 
   // Generate refresh token
   const refreshToken = jwtHelpars.generateToken(
     tokenPayload,
-    config.jwt.refresh_secret as Secret,
-    config.jwt.refresh_expires_in as string,
+    config.jwt.refresh_secret,
+    config.jwt.refresh_expires_in,
   );
 
   return {
@@ -71,7 +70,7 @@ const refreshToken = async (token: string) => {
     // Verify refresh token
     decodedData = jwtHelpars.verifyToken(
       token,
-      config.jwt.refresh_secret as Secret,
+      config.jwt.refresh_secret,
     );
     console.log("Decoded refresh token:", decodedData);
   } catch (error) {
@@ -106,8 +105,8 @@ const refreshToken = async (token: string) => {
   // Generate new access token
   const accessToken = jwtHelpars.generateToken(
     tokenPayload,
-    config.jwt.secret as Secret,
-    config.jwt.expires_in as string,
+    config.jwt.secret,
+    config.jwt.expires_in,
   );
 
   return {

@@ -4,7 +4,10 @@ import ApiError from "../../error/ApiError";
 import prisma from "../models";
 import { resolveSeo } from "../../../lib/seo-analysis/resolveSeo";
 import { excludeNoindexFromSitemap } from "../../../lib/seo-analysis/sitemap";
-import { SeoContentType } from "../validation/seo.validation";
+import {
+  normalizeSeoContentType,
+  SeoContentTypeInput,
+} from "../validation/seo.validation";
 import { getSiteSettings } from "./siteSettings.service";
 import { escapeJsonLdForScript } from "../../../lib/seo-analysis/jsonLd";
 
@@ -15,9 +18,10 @@ const contentRelations = {
 } as const;
 
 export const getPublicSeoBySlug = async (
-  type: SeoContentType,
+  type: SeoContentTypeInput,
   slug: string,
 ) => {
+  const contentType = normalizeSeoContentType(type);
   let content: {
     title: string;
     slug: string | null;
@@ -29,14 +33,14 @@ export const getPublicSeoBySlug = async (
     }>;
   } | null = null;
 
-  switch (type) {
+  switch (contentType) {
     case "page":
       content = await prisma.page.findFirst({
         where: { slug, published: true },
         select: { title: true, slug: true, seoMeta: true, ...contentRelations },
       });
       break;
-    case "blogPost":
+    case "blog":
       content = await prisma.blogPost.findFirst({
         where: { slug, published: true },
         select: { title: true, slug: true, seoMeta: true, ...contentRelations },

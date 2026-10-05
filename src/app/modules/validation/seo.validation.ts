@@ -24,15 +24,21 @@ export const httpUrlSchema = z
   .url("Must be a valid URL")
   .refine((value) => /^https?:\/\//i.test(value), "URL must use HTTP or HTTPS");
 
-export const seoContentTypeSchema = z.enum(["page", "blogPost", "review"]);
+export const seoContentTypeSchema = z.enum(["page", "blog", "review"]);
+export const seoContentTypeInputSchema = z.enum([
+  "page",
+  "blog",
+  "blogPost",
+  "review",
+]);
 
 export const seoParamsSchema = z.object({
-  type: seoContentTypeSchema,
+  type: seoContentTypeInputSchema,
   id: z.string().trim().min(1, "Content ID is required"),
 });
 
 export const publicSeoParamsSchema = z.object({
-  type: seoContentTypeSchema,
+  type: seoContentTypeInputSchema,
   slug: z.string().trim().min(1, "Slug is required"),
 });
 
@@ -98,5 +104,10 @@ export const seoAnalysisSchema = z.object({
 });
 
 export type SeoContentType = z.infer<typeof seoContentTypeSchema>;
+export type SeoContentTypeInput = z.infer<typeof seoContentTypeInputSchema>;
 export type SeoUpdateInput = z.infer<typeof seoUpdateSchema>;
 export type SeoAnalysisInput = z.infer<typeof seoAnalysisSchema>;
+
+export const normalizeSeoContentType = (
+  type: SeoContentTypeInput,
+): SeoContentType => (type === "blogPost" ? "blog" : type);

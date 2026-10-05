@@ -16,7 +16,9 @@ alongside the requested `/api` paths.
 | GET    | `/api/admin/images/:type/:id`  | List content images with SEO diagnostics               |
 | PATCH  | `/api/admin/images/:imageId`   | Update image metadata and its HTML attributes          |
 
-Supported `:type` values are `page`, `blogPost`, and `review`. SEO titles are
+Supported SEO `:type` values are `page`, `blog`, and `review`. The previous
+`blogPost` type remains accepted as a backward-compatible alias; list responses
+use the canonical `blog` type. SEO titles are
 limited to 60 characters, descriptions to 160 characters, and content titles
 to 255 characters. Slugs must contain lowercase letters, digits, and single
 hyphens and must be unique across all content types. Canonical and image URLs

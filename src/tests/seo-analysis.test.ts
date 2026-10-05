@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {
+  normalizeSeoContentType,
+  seoContentTypeSchema,
+  seoParamsSchema,
+} from "../app/modules/validation/seo.validation";
 import { analyzeSeoMetadata } from "../lib/seo-analysis/analyzeSeoMetadata";
 import { resolveSeo } from "../lib/seo-analysis/resolveSeo";
 import { excludeNoindexFromSitemap } from "../lib/seo-analysis/sitemap";
@@ -53,6 +58,14 @@ test("SEO update rejects invalid slugs and non-HTTP URLs", () => {
     seoUpdateSchema.safeParse({ canonicalUrl: "javascript:alert(1)" }).success,
     false,
   );
+});
+
+test("SEO routes use blog as the canonical type and retain the blogPost alias", () => {
+  assert.equal(seoContentTypeSchema.parse("blog"), "blog");
+  assert.equal(seoParamsSchema.parse({ type: "blog", id: "post-id" }).type, "blog");
+  assert.equal(normalizeSeoContentType("blogPost"), "blog");
+  assert.equal(normalizeSeoContentType("blog"), "blog");
+  assert.equal(seoContentTypeSchema.safeParse("blogPost").success, false);
 });
 
 test("SEO update enforces title and description limits", () => {

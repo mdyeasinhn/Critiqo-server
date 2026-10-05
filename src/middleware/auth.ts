@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { Secret } from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
 import { jwtHelpars } from "../app/helpers/jwtHelpers";
 import config from "../app/config";
@@ -29,10 +28,7 @@ const auth = (...roles: string[]) => {
       }
 
       // Verify token
-      const verifiedUser = jwtHelpars.verifyToken(
-        token,
-        config.jwt.secret as Secret,
-      );
+      const verifiedUser = jwtHelpars.verifyToken(token, config.jwt.secret);
 
       // If there's no userId but there is an email, look up the user to get the ID
       if (!verifiedUser.userId && verifiedUser.email) {

@@ -4,7 +4,12 @@ import ApiError from "../../error/ApiError";
 import prisma from "../models";
 import { analyzeSeoMetadata } from "../../../lib/seo-analysis/analyzeSeoMetadata";
 import { sanitizeAndExtractImages } from "../../../lib/seo-analysis/sanitizeContentHtml";
-import { SeoContentType, SeoUpdateInput } from "../validation/seo.validation";
+import {
+  normalizeSeoContentType,
+  SeoContentType,
+  SeoContentTypeInput,
+  SeoUpdateInput,
+} from "../validation/seo.validation";
 
 type ContentRow = {
   id: string;
@@ -55,7 +60,7 @@ const mapBlogPost = (
   },
 ): ContentRow => ({
   id: row.id,
-  type: "blogPost",
+  type: "blog",
   title: row.title,
   slug: row.slug,
   contentHtml: row.contentHtml,
@@ -138,10 +143,11 @@ export const listSeoContent = async () => {
     }));
 };
 
-export const getSeoContent = async (type: SeoContentType, id: string) => {
+export const getSeoContent = async (type: SeoContentTypeInput, id: string) => {
+  const contentType = normalizeSeoContentType(type);
   let content: ContentRow | null = null;
 
-  switch (type) {
+  switch (contentType) {
     case "page": {
       const row = await prisma.page.findUnique({
         where: { id },
@@ -150,7 +156,7 @@ export const getSeoContent = async (type: SeoContentType, id: string) => {
       content = row ? mapPage(row) : null;
       break;
     }
-    case "blogPost": {
+    case "blog": {
       const row = await prisma.blogPost.findUnique({
         where: { id },
         include: {
@@ -197,7 +203,7 @@ const ensureUniqueSlug = async (
       select: { id: true },
     }),
     prisma.blogPost.findFirst({
-      where: { slug, ...(type === "blogPost" ? { id: { not: id } } : {}) },
+      where: { slug, ...(type === "blog" ? { id: { not: id } } : {}) },
       select: { id: true },
     }),
     prisma.review.findFirst({
@@ -258,7 +264,7 @@ const upsertSeoMeta = async (
         update,
       });
       break;
-    case "blogPost":
+    case "blog":
       await tx.seoMeta.upsert({
         where: { blogPostId: id },
         create: { ...create, blogPostId: id },
@@ -288,7 +294,7 @@ const replaceSchemaMarkups = async (
         data: schemaMarkups.map((item) => ({ ...item, pageId: id })),
       });
       break;
-    case "blogPost":
+    case "blog":
       await tx.schemaMarkup.deleteMany({ where: { blogPostId: id } });
       await tx.schemaMarkup.createMany({
         data: schemaMarkups.map((item) => ({ ...item, blogPostId: id })),
@@ -320,7 +326,7 @@ const replaceContentImages = async (
         })),
       });
       break;
-    case "blogPost":
+    case "blog":
       await tx.contentImage.deleteMany({ where: { blogPostId: id } });
       await tx.contentImage.createMany({
         data: images.map((image, position) => ({
@@ -344,13 +350,14 @@ const replaceContentImages = async (
 };
 
 export const updateSeoContent = async (
-  type: SeoContentType,
+  type: SeoContentTypeInput,
   id: string,
   input: SeoUpdateInput,
 ) => {
-  const current = await getSeoContent(type, id);
+  const contentType = normalizeSeoContentType(type);
+  const current = await getSeoContent(contentType, id);
   if (input.slug) {
-    await ensureUniqueSlug(type, id, input.slug);
+    await ensureUniqueSlug(contentType, id, input.slug);
   }
 
   const sanitizedContent =
@@ -366,11 +373,11 @@ export const updateSeoContent = async (
 
   try {
     await prisma.$transaction(async (tx) => {
-      switch (type) {
+      switch (contentType) {
         case "page":
           await tx.page.update({ where: { id }, data: contentUpdate });
           break;
-        case "blogPost":
+        case "blog":
           await tx.blogPost.update({ where: { id }, data: contentUpdate });
           break;
         case "review":
@@ -388,13 +395,13 @@ export const updateSeoContent = async (
           break;
       }
 
-      await upsertSeoMeta(tx, type, id, current.slug, input);
+      await upsertSeoMeta(tx, contentType, id, current.slug, input);
 
       if (input.schemaMarkup !== undefined) {
-        await replaceSchemaMarkups(tx, type, id, input.schemaMarkup);
+        await replaceSchemaMarkups(tx, contentType, id, input.schemaMarkup);
       }
       if (sanitizedContent) {
-        switch (type) {
+        switch (contentType) {
           case "page":
             await tx.contentImage.deleteMany({ where: { pageId: id } });
             if (sanitizedContent.images.length > 0) {
@@ -406,7 +413,7 @@ export const updateSeoContent = async (
               });
             }
             break;
-          case "blogPost":
+          case "blog":
             await tx.contentImage.deleteMany({ where: { blogPostId: id } });
             if (sanitizedContent.images.length > 0) {
               await tx.contentImage.createMany({
@@ -430,7 +437,7 @@ export const updateSeoContent = async (
             break;
         }
       } else if (input.contentImages !== undefined) {
-        await replaceContentImages(tx, type, id, input.contentImages);
+        await replaceContentImages(tx, contentType, id, input.contentImages);
       }
     });
   } catch (error: unknown) {
@@ -452,7 +459,7 @@ export const updateSeoContent = async (
     throw error;
   }
 
-  return getSeoContent(type, id);
+  return getSeoContent(contentType, id);
 };
 
 export type { ContentRow };
