@@ -12,6 +12,7 @@ import {
   PublicContentRoutes,
 } from "./app/modules/routes/content.routes";
 import { ImageRoutes } from "./app/modules/routes/image.routes";
+import { SchemaRoutes } from "./app/modules/routes/schema.routes";
 
 const app: Application = express();
 
@@ -38,8 +39,17 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.get("/contactus", (_req: Request, res: Response) => {
+  res.redirect(StatusCodes.MOVED_PERMANENTLY, "/contact");
+});
+
+app.get("/api/contactus", (_req: Request, res: Response) => {
+  res.redirect(StatusCodes.MOVED_PERMANENTLY, "/contact");
+});
+
 // Application routes
 app.use("/api/admin/seo", seoRoutes);
+app.use("/api/admin/schema", SchemaRoutes);
 app.use("/api/admin/site-settings", siteSettingsRoutes);
 app.use("/api/admin/content", AdminContentRoutes);
 app.use("/api/admin/images", ImageRoutes);

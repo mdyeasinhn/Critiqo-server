@@ -1,7 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 
-const port = 5000;
+const port = Number(process.env.PORT ?? 5000);
 
 async function main() {
   try {

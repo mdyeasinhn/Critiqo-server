@@ -6,6 +6,7 @@ import { resolveSeo } from "../../../lib/seo-analysis/resolveSeo";
 import { excludeNoindexFromSitemap } from "../../../lib/seo-analysis/sitemap";
 import { SeoContentType } from "../validation/seo.validation";
 import { getSiteSettings } from "./siteSettings.service";
+import { escapeJsonLdForScript } from "../../../lib/seo-analysis/jsonLd";
 
 const contentRelations = {
   schemaMarkups: {
@@ -65,6 +66,7 @@ export const getPublicSeoBySlug = async (
     schema: content.schemaMarkups.map(({ type: schemaType, json }) => ({
       type: schemaType,
       json,
+      scriptJson: escapeJsonLdForScript(json),
     })),
   };
 };

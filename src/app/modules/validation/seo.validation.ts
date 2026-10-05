@@ -83,5 +83,20 @@ export const seoUpdateSchema = z
     message: "At least one field must be provided",
   });
 
+export const seoAnalysisSchema = z.object({
+  html: z
+    .string()
+    .max(100_000, "HTML content cannot exceed 100,000 characters"),
+  seoTitle: z.string().max(255, "SEO title cannot exceed 255 characters"),
+  metaDescription: z
+    .string()
+    .max(500, "Meta description cannot exceed 500 characters"),
+  slug: z.string().max(255, "Slug cannot exceed 255 characters"),
+  focusKeyword: z
+    .string()
+    .max(200, "Focus keyword cannot exceed 200 characters"),
+});
+
 export type SeoContentType = z.infer<typeof seoContentTypeSchema>;
 export type SeoUpdateInput = z.infer<typeof seoUpdateSchema>;
+export type SeoAnalysisInput = z.infer<typeof seoAnalysisSchema>;

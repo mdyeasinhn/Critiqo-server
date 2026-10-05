@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "start": "node dist/server.js",
+    "start:prod": "prisma migrate deploy && node dist/server.js",
     "build": "tsc",
-    "test": "tsx --test src/tests/seo-analysis.test.ts",
+    "test": "tsx --test src/tests/seo-analysis.test.ts src/tests/seo-access.test.ts",
+    "migrate:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "lint": "npx eslint src --ignore-pattern .ts",
     "lint:fix": "npx eslint src --fix",
@@ -27,8 +30,10 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.15.3",
     "@types/sanitize-html": "^2.16.2",
+    "@types/supertest": "^7.2.1",
     "prettier": "^3.5.3",
     "prisma": "^6.7.0",
+    "supertest": "^7.3.1",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"

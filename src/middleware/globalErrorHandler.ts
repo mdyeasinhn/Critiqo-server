@@ -4,7 +4,7 @@ import { TErrorSources } from "../app/interface/error";
 import { ZodError } from "zod";
 import handleZodError from "../app/error/handleZodError";
 import ApiError from "../app/error/ApiError";
-import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 const globalErrorHandler = (
   err: unknown,
@@ -30,10 +30,7 @@ const globalErrorHandler = (
     statusCode = err.statusCode;
     message = err.message;
     errorSources = [{ path: "", message }];
-  } else if (
-    err instanceof JsonWebTokenError ||
-    err instanceof TokenExpiredError
-  ) {
+  } else if (err instanceof jwt.JsonWebTokenError) {
     statusCode = StatusCodes.UNAUTHORIZED;
     message = "Invalid or expired authentication token";
     errorSources = [{ path: "", message }];
@@ -42,7 +39,9 @@ const globalErrorHandler = (
     errorSources = [{ path: "", message }];
   }
 
-  console.error(err);
+  if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
+    console.error(err);
+  }
   res.status(statusCode).json({
     success: false,
     message,

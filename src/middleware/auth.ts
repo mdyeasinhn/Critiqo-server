@@ -19,7 +19,10 @@ const auth = (...roles: string[]) => {
   ) => {
     try {
       // Get token from authorization header
-      const token = req.headers.authorization;
+      const authorization = req.headers.authorization;
+      const token = authorization?.startsWith("Bearer ")
+        ? authorization.slice("Bearer ".length)
+        : authorization;
 
       if (!token) {
         throw new ApiError(StatusCodes.UNAUTHORIZED, "You are not authorized!");
@@ -31,9 +34,6 @@ const auth = (...roles: string[]) => {
         config.jwt.secret as Secret,
       );
 
-      // Log verification for debugging
-      console.log("Verified user from token:", verifiedUser);
-
       // If there's no userId but there is an email, look up the user to get the ID
       if (!verifiedUser.userId && verifiedUser.email) {
         try {
@@ -44,10 +44,6 @@ const auth = (...roles: string[]) => {
 
           if (user) {
             verifiedUser.userId = user.id;
-            console.log(
-              "Added userId from database lookup:",
-              verifiedUser.userId,
-            );
           }
         } catch (error) {
           console.error("Error looking up user by email:", error);

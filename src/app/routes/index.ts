@@ -17,6 +17,7 @@ import {
   PublicContentRoutes,
 } from "../modules/routes/content.routes";
 import { ImageRoutes } from "../modules/routes/image.routes";
+import { SchemaRoutes } from "../modules/routes/schema.routes";
 
 const router = express.Router();
 
@@ -40,6 +41,10 @@ const moduleRoutes = [
   {
     path: "/admin/seo",
     route: SeoRoutes,
+  },
+  {
+    path: "/admin/schema",
+    route: SchemaRoutes,
   },
   {
     path: "/admin/site-settings",

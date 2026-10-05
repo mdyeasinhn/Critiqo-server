@@ -6,7 +6,15 @@ import {
   listSeoContent,
   updateSeoContent,
 } from "../services/seo.service";
-import { seoParamsSchema, seoUpdateSchema } from "../validation/seo.validation";
+import {
+  analyzeContent,
+  calculateSeoScore,
+} from "../../../lib/seo-analysis/contentChecks";
+import {
+  seoAnalysisSchema,
+  seoParamsSchema,
+  seoUpdateSchema,
+} from "../validation/seo.validation";
 
 const list = catchAsync(async (_req, res) => {
   const data = await listSeoContent();
@@ -40,8 +48,25 @@ const update = catchAsync(async (req, res) => {
   });
 });
 
+const analyze = catchAsync(async (req, res) => {
+  const input = seoAnalysisSchema.parse(req.body);
+  const checks = analyzeContent({
+    html: input.html,
+    title: input.seoTitle,
+    description: input.metaDescription,
+    slug: input.slug,
+    keyword: input.focusKeyword,
+  });
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: "SEO content analysis completed",
+    data: { score: calculateSeoScore(checks), checks },
+  });
+});
+
 export const SeoController: {
   list: RequestHandler;
   get: RequestHandler;
   update: RequestHandler;
-} = { list, get, update };
+  analyze: RequestHandler;
+} = { list, get, update, analyze };

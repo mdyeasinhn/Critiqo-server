@@ -36,5 +36,9 @@ site sitemap and robots rules:
 - `GET /api/seo/:type/:slug`
 - `GET /api/seo/sitemap`
 - `GET /api/seo/robots`
+- `POST /api/admin/seo/analyze` accepts `html`, `seoTitle`,
+  `metaDescription`, `slug`, and `focusKeyword`; it returns an explained check
+  list and a deterministic score. The endpoint is limited to 20 requests per
+  15 minutes per client.
 
 Run `npm run seed` to idempotently initialize the default `SiteSettings` row.
