@@ -86,6 +86,60 @@ test("all admin route groups reject non-admin JWTs before handling requests", as
   );
 });
 
+test("versioned SEO analysis returns scored checks and enforces the rate limit", async () => {
+  const input = {
+    html: "<h1>SEO guide</h1><h2>SEO tips</h2><p>SEO guide content for readers.</p><a href=\"https://example.com/guide\">Related guide</a>",
+    seoTitle: "SEO guide for better content",
+    metaDescription:
+      "Learn practical SEO tips to improve your content and help readers find useful information online.",
+    slug: "seo-guide",
+    focusKeyword: "SEO",
+  };
+
+  const unauthenticatedResponse = await request(app)
+    .post("/api/v1/admin/seo/analyze")
+    .send(input);
+  assert.equal(unauthenticatedResponse.status, 401);
+
+  const nonAdminResponse = await request(app)
+    .post("/api/v1/admin/seo/analyze")
+    .set("Authorization", userAuthorization)
+    .send(input);
+  assert.equal(nonAdminResponse.status, 403);
+
+  const response = await request(app)
+    .post("/api/v1/admin/seo/analyze")
+    .set("Authorization", adminAuthorization)
+    .send(input);
+
+  assert.equal(response.status, 200);
+  assert.equal(typeof response.body.data.score, "number");
+  assert.equal(response.body.data.checks.length, 8);
+  assert.ok(
+    response.body.data.checks.every(
+      (check: Record<string, unknown>) =>
+        typeof check.id === "string" &&
+        ["pass", "warn", "fail"].includes(String(check.status)) &&
+        typeof check.message === "string" &&
+        "value" in check,
+    ),
+  );
+
+  let rateLimited = false;
+  for (let attempt = 1; attempt < 21; attempt += 1) {
+    const limitedResponse = await request(app)
+      .post("/api/v1/admin/seo/analyze")
+      .set("Authorization", adminAuthorization)
+      .send(input);
+    if (limitedResponse.status === 429) {
+      rateLimited = true;
+      assert.match(limitedResponse.body.message, /Too many SEO analysis requests/);
+      break;
+    }
+  }
+  assert.equal(rateLimited, true);
+});
+
 test("invalid schema edits return clear parsing and required-field reasons", async () => {
   const invalidSchemas: Array<{
     schemaType: string;

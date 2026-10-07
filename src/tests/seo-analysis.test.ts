@@ -270,6 +270,41 @@ test("title and description length checks report limits and empty values", () =>
 });
 
 test("SEO score uses fixed weights and is deterministic for identical inputs", () => {
+  const checkIds = [
+    "keyword-placement",
+    "keyword-density",
+    "headings",
+    "title-length",
+    "description-length",
+    "word-count",
+    "links",
+    "paragraph-length",
+  ];
+  const checksWithStatus = (
+    status: "pass" | "warn" | "fail",
+  ) =>
+    checkIds.map((id) => ({
+      id,
+      status,
+      message: "SEO check",
+      value: 0,
+    }));
+
+  assert.equal(calculateSeoScore(checksWithStatus("pass")), 100);
+  assert.equal(calculateSeoScore(checksWithStatus("fail")), 0);
+  assert.equal(calculateSeoScore(checksWithStatus("warn")), 50);
+  assert.equal(
+    calculateSeoScore([
+      {
+        id: "keyword-density",
+        status: "warn",
+        message: "SEO check",
+        value: 0,
+      },
+    ]),
+    8,
+  );
+
   const input = {
     html: "<h1>SEO guide</h1><p>SEO guide content</p>",
     title: "SEO guide",
@@ -300,6 +335,24 @@ test("SEO score uses fixed weights and is deterministic for identical inputs", (
   );
   assert.ok(checks.every((check) => check.id && check.message));
   assert.equal(countWords("").status, "warn");
+
+  const emptyChecks = analyzeContent({
+    html: "",
+    title: "",
+    description: "",
+    slug: "",
+    keyword: "",
+  });
+  assert.equal(emptyChecks.length, 8);
+  assert.ok(
+    emptyChecks.every(
+      (check) =>
+        check.id &&
+        ["pass", "warn", "fail"].includes(check.status) &&
+        check.message &&
+        check.value !== undefined,
+    ),
+  );
 });
 
 test("JSON-LD builders produce their expected schema types and aggregates", () => {
