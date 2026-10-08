@@ -1,7 +1,8 @@
+import config from "./app/config";
 import { Server } from "http";
 import app from "./app";
 
-const port = Number(process.env.PORT ?? 5000);
+const port = Number(config.port ?? 5000);
 
 async function main() {
   try {
@@ -14,3 +15,4 @@ async function main() {
 }
 
 main();
+
