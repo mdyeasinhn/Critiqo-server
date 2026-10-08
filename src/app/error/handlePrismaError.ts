@@ -1,7 +1,6 @@
-// errors/handlePrismaError.ts
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
-export default function handlePrismaError(err: PrismaClientKnownRequestError) {
+export default function handlePrismaError(err: Prisma.PrismaClientKnownRequestError) {
   let statusCode = 400;
   let message = "Database request error";
   const errorSources = [];
