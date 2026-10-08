@@ -1,6 +1,6 @@
 import { UserStatus } from "@prisma/client";
 import prisma from "../models";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { jwtHelpars } from "../../helpers/jwtHelpers";
 import config from "../../config";
 import ApiError from "../../error/ApiError";

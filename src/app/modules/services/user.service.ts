@@ -1,6 +1,6 @@
 import { Request } from "express";
 import prisma from "../models";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { IFile } from "../../interface/file";
 import { Prisma, UserRole, UserStatus } from "@prisma/client";
 import { IPagenationOptions } from "../../interface/pagination";
