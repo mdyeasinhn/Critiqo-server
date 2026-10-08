@@ -6,6 +6,7 @@ import {
   getRobots,
   getSitemap,
 } from "../services/publicSeo.service";
+import { getSiteSettings } from "../services/siteSettings.service";
 import { publicSeoParamsSchema } from "../validation/seo.validation";
 
 const getSeo = catchAsync(async (req, res) => {
@@ -25,12 +26,19 @@ const getRobotsRules = catchAsync(async (_req, res) => {
   res.status(StatusCodes.OK).json({ success: true, data });
 });
 
+const getPublicSiteSettings = catchAsync(async (_req, res) => {
+  const data = await getSiteSettings();
+  res.status(StatusCodes.OK).json({ success: true, data });
+});
+
 export const PublicSeoController: {
   getSeo: RequestHandler;
   getSitemap: RequestHandler;
   getRobots: RequestHandler;
+  getSiteSettings: RequestHandler;
 } = {
   getSeo,
   getSitemap: getSitemapIndex,
   getRobots: getRobotsRules,
+  getSiteSettings: getPublicSiteSettings,
 };
