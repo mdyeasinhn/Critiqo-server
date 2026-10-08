@@ -20,11 +20,8 @@ const verifyToken = (
   try {
     const decoded = jwt.verify(token, secret) as JwtPayload & IJwtPayload;
 
-    console.log("Decoded token:", decoded);
-
     return decoded;
   } catch (error) {
-    console.error("Token verification error:", error);
     throw error;
   }
 };

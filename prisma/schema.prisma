@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -120,6 +121,9 @@ model Review {
   id             String       @id @default(uuid())
   title          String
   description    String
+  slug           String?      @unique
+  contentHtml    String?
+  published      Boolean      @default(false)
   rating         Int
   purchaseSource String?
   images         String // Cloudinary URLs
@@ -133,16 +137,123 @@ model Review {
   updatedAt      DateTime     @updatedAt
 
   // Relations
-  category Category  @relation(fields: [categoryId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
-  comments Comment[]
-  votes    Vote[]
-  payments Payment[]
+  category      Category       @relation(fields: [categoryId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  comments      Comment[]
+  votes         Vote[]
+  payments      Payment[]
+  seoMeta       SeoMeta?
+  schemaMarkups SchemaMarkup[]
+  contentImages ContentImage[]
 
   Post   Post?   @relation(fields: [postId], references: [id])
   postId String?
 
   @@map("reviews")
+}
+
+model Page {
+  id            String         @id @default(uuid())
+  slug          String         @unique
+  title         String
+  contentHtml   String
+  published     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  seoMeta       SeoMeta?
+  schemaMarkups SchemaMarkup[]
+  contentImages ContentImage[]
+
+  @@map("pages")
+}
+
+model BlogPost {
+  id            String         @id @default(uuid())
+  slug          String         @unique
+  title         String
+  contentHtml   String
+  published     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  seoMeta       SeoMeta?
+  schemaMarkups SchemaMarkup[]
+  contentImages ContentImage[]
+
+  @@map("blog_posts")
+}
+
+model SeoMeta {
+  id                 String    @id @default(uuid())
+  seoTitle           String?
+  metaDescription    String?
+  slug               String?
+  focusKeyword       String?
+  canonicalUrl       String?
+  noindex            Boolean   @default(false)
+  ogTitle            String?
+  ogDescription      String?
+  ogImage            String?
+  twitterTitle       String?
+  twitterDescription String?
+  twitterImage       String?
+  pageId             String?   @unique
+  blogPostId         String?   @unique
+  reviewId           String?   @unique
+  page               Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blogPost           BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  review             Review?   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("seo_meta")
+}
+
+model SchemaMarkup {
+  id         String    @id @default(uuid())
+  type       String
+  json       Json
+  pageId     String?
+  blogPostId String?
+  reviewId   String?
+  page       Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  review     Review?   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("schema_markups")
+}
+
+model ContentImage {
+  id         String    @id @default(uuid())
+  url        String
+  alt        String?
+  title      String?
+  fileName   String?
+  position   Int       @default(0)
+  pageId     String?
+  blogPostId String?
+  reviewId   String?
+  page       Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  review     Review?   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("content_images")
+}
+
+model SiteSettings {
+  id                 String   @id @default("default")
+  siteName           String
+  baseUrl            String
+  defaultTitle       String
+  defaultDescription String
+  defaultOgImage     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("site_settings")
 }
 
 model Comment {
